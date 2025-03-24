@@ -1,8 +1,12 @@
+import os
+
 from fastapi import FastAPI
 app = FastAPI()
 
 from openai import OpenAI
-client = OpenAI()
+client = OpenAI(
+    api_key = os.getenv('OPENAI_API_KEY')
+)
 
 
 @app.get("/")
