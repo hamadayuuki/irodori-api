@@ -78,11 +78,8 @@ async def checkVisionGPT():
 class ImageRequest(BaseModel):
     imageBase64: str
 
-@app.get("/coordinate-review")
+@app.post("/coordinate-review")
 async def coordinateReview(request: ImageRequest):
-    imageURL = "https://images.wear2.jp/coordinate/DZiOeg3/21k0twHn/1728043950_500.jpg"   # WEARのコーデ画像
-    imageData = requests.get(imageURL).content
-    encodedImage = base64.b64encode(imageData).decode('utf-8')
     prompt = """
     添付する画像に合わせて、以下の質問に回答する形でコーデに関するコメントをください。
 
