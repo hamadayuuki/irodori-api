@@ -77,8 +77,10 @@ async def checkVisionGPT():
 
 class ImageRequest(BaseModel):
     imageBase64: str
+class ImageResponse(BaseModel):
+    result: str
 
-@app.post("/coordinate-review")
+@app.post("/coordinate-review", response_model = ImageResponse)
 async def coordinateReview(request: ImageRequest):
     prompt = """
     添付する画像に合わせて、以下の質問に回答する形でコーデに関するコメントをください。
