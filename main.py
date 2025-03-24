@@ -76,7 +76,7 @@ async def checkVisionGPT():
 
 
 class ImageRequest(BaseModel):
-    image_base64: str
+    imageBase64: str
 
 @app.get("/coordinate-review")
 async def coordinateReview(request: ImageRequest):
