@@ -31,7 +31,7 @@ async def checkVisionGPT():
     imageURL = "https://images.wear2.jp/coordinate/DZiOeg3/21k0twHn/1728043950_500.jpg"   # WEARのコーデ画像
     imageData = requests.get(imageURL).content
     encodedImage = base64.b64encode(imageData).decode('utf-8')
-    response = client.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
