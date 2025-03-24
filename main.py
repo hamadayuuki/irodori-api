@@ -31,7 +31,7 @@ async def checkVisionGPT():
     imageURL = "https://images.wear2.jp/coordinate/DZiOeg3/21k0twHn/1728043950_500.jpg"   # WEARのコーデ画像
     imageData = requests.get(imageURL).content
     encodedImage = base64.b64encode(imageData).decode('utf-8')
-    question = """
+    prompt = """
     添付する画像に合わせて、以下の質問に回答する形でコーデに関するコメントをください。
 
     ## フォーマット
@@ -59,7 +59,7 @@ async def checkVisionGPT():
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": "この画像の特徴を日本語で教えてください。"},
+                    {"type": "text", "text": prompt},
                     {
                         "type": "image_url",
                         "image_url": {
