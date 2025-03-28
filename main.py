@@ -76,7 +76,7 @@ async def checkVisionGPT():
 
 
 class ImageRequest(BaseModel):
-    imageBase64: str
+    image_base64: str
 class ImageResponse(BaseModel):
     result: str
 
