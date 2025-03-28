@@ -122,6 +122,8 @@ async def coordinateReview(request: ImageRequest):
         ],
         max_tokens=300,
     )
+    print(response.choices[0].message.content)
+    print(ImageResponse(result = response.choices[0].message.content))
     return ImageResponse(result = response.choices[0].message.content)
 
 
