@@ -1,6 +1,8 @@
 import os
 import base64
+import json
 from typing import List
+
 from pydantic import BaseModel
 import requests
 
@@ -164,7 +166,7 @@ async def coordinateReview(request: ImageRequest):
     openAIResponseJSON = json.loads(openAIResponse)
     coordinateResponse = CoordinateResponse(**openAIResponseJSON)
     print(coordinateResponse)
-    
+
     return ImageResponse(result = coordinateResponse.coordinateReview)
 
 
