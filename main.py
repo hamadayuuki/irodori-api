@@ -86,6 +86,10 @@ class ImageResponse(BaseModel):
 
 class CoordinateResponse(BaseModel):
     coordinate_review: str
+    recommend_tops: str
+    tops_search_word: str
+    recommend_bottoms: str
+    bottoms_search_word: str
 
 
 @app.post("/coordinate-review", response_model = ImageResponse)
@@ -96,26 +100,44 @@ async def coordinateReview(request: ImageRequest):
     また、トレンド感のあるアイテムやスタイル提案にも精通しており、コーデ画像から季節感を考慮し、ユーザーの魅力を引き出す最適なコーディネートを提案できます。
     """
     prompt = """
-    添付する画像に合わせて、以下の質問に回答する形でコーデに関するコメントをください。
+    添付する画像に合わせて、アウトプットを生成してください
 
     ## coordinateReviewのフォーマット
     <ワンポイントアイテムを褒める>
     <サイズ感についてのコメント>
     <シルエット診断>
     <コーディネートタイプ診断>
-    <あなたに似合うコーディネートタイプは>
+    <あなたのボトムスに合うトップスは>
+    <あなたのトップスに合うボトムスは>
 
     ## coordinateReviewの出力例
     白色のキャップが可愛いですね
     ワイドなパンツを履いているのでラフでスマートな印象を受けます。\n上下のサイズがちょうど良いのでおしゃれな印象を受けます
     あなたのシルエットはIです。Iが似合うのは〜のような特徴を持った方です
-    また、あなたのコーデはカジュアルです。
-    カジュアル が似合う方におすすめのコーデタイプは、ノームコアです。
+    また、あなたのコーデのタイプはカジュアルです。
+    あなたの履いている黒色のワイドパンツに合うトップスはグレーのスウェットです。ワイドパンツなのでスウェットのサイズは少し小さめ良さそうです。
+    また、あなたの着ているカーキの長袖シャツに合うボトムスは、黒色のカーゴパンツです。カーゴパンツはラフになりすぎるので、色は落ち着いた黒色をおすすめします。
 
-    
+    ## recommend_tops の出力例
+    黒色のワイドパンツに合うトップスは『グレーのスウェット』
+
+    ## tops_search_word の出力例
+    グレー スウェット
+
+    ## recommend_bottoms の出力例
+    カーキの長袖シャツに合うボトムスは『黒色のカーゴパンツ』
+
+    ## bottoms_search_word の出力例
+    黒色 カーゴパンツ
+
+
     ## アウトプットのフォーマット（JSON形式でアウトプアットを生成してください）
     {
         "coordinate_review": "<coordinateReviewのフォーマットに従って生成してください。また、coordinateReviewの出力例を参考にしてください。出力例よりもクオリティーの高い、本質的な文章を生成してください。: String型>",
+        "recommend_tops": <recommend_tops の出力例 を参考に生成: String型>,
+        "tops_search_word": <tops_search_word の出力例 を参考に生成: String型>,
+        "recommend_bottoms": <recommend_bottoms の出力例 を参考に生成: String型>,
+        "bottoms_search_word": <bottoms_search_word の出力例 を参考に生成: String型>
     }
     """
     response = client.chat.completions.create(
