@@ -163,7 +163,7 @@ async def coordinateReview(request: ImageRequest):
             }
         ],
         response_format = {"type": "json_object"},
-        max_tokens = 300,
+        max_tokens = 500,
     )
     print(response.choices[0].message.content)
 
