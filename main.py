@@ -134,10 +134,10 @@ async def coordinateReview(request: ImageRequest):
     ## アウトプットのフォーマット（JSON形式でアウトプアットを生成してください）
     {
         "coordinate_review": "<coordinateReviewのフォーマットに従って生成してください。また、coordinateReviewの出力例を参考にしてください。出力例よりもクオリティーの高い、本質的な文章を生成してください。: String型>",
-        "recommend_tops": <recommend_tops の出力例 を参考に生成: String型>,
-        "tops_search_word": <tops_search_word の出力例 を参考に生成: String型>,
-        "recommend_bottoms": <recommend_bottoms の出力例 を参考に生成: String型>,
-        "bottoms_search_word": <bottoms_search_word の出力例 を参考に生成: String型>
+        "recommend_tops": "<recommend_tops の出力例 を参考に生成: String型>",
+        "tops_search_word": "<tops_search_word の出力例 を参考に生成: String型>",
+        "recommend_bottoms": "<recommend_bottoms の出力例 を参考に生成: String型>",
+        "bottoms_search_word": "<bottoms_search_word の出力例 を参考に生成: String型>"
     }
     """
     response = client.chat.completions.create(
