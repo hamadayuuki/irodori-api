@@ -83,16 +83,18 @@ class ImageRequest(BaseModel):
 class ImageResponse(BaseModel):
     result: str
 
-class CoordinateReviewItem(BaseModel):
-    review: str
+
+class CoordinateResponse(BaseModel):
+    coordinate_review: str
+
+    review_using_bottoms: str
     bottoms: str
     recommend_tops_or_outer: str
+
+    review_using_tops_or_outer: str
     tops_or_outer: str
     recommend_bottoms: str
 
-class CoordinateResponse(BaseModel):
-    coordinateReview: str
-    RecommendItems: List[CoordinateReviewItem]
 
 @app.post("/coordinate-review", response_model = ImageResponse)
 async def coordinateReview(request: ImageRequest):
@@ -121,19 +123,15 @@ async def coordinateReview(request: ImageRequest):
     
     ## アウトプットのフォーマット（JSON形式でアウトプアットを生成してください）
     {
-        "coordinateReview": "<coordinateReviewのフォーマットに従って生成>",
-        "RecommendItems": [
-            {
-                "review": <画像のコーデのボトムス(ズボン)の特徴 と ボトムス(ズボン)に合うトップスorアウター と トップスorアウターが合うと考えた理由 を100文字以内で教えてください>,
-                "bottoms": <画像のコーデのボトムス(ズボン)の名称>,
-                "recommend_tops_or_outer": <ボトムス(ズボン)に合うトップスorアウターの名称>
-            },
-            {
-                "review": <画像のコーデのトップスorアウターの特徴 と トップスorアウターに合うボトムス(ズボン) と ボトムス(ズボン)が合うと考えた理由 を100文字以内で教えてください>,
-                "tops_or_outer": <画像のコーデのトップスorアウターの名称>,
-                "recommend_bottoms": <トップスorアウターに合うボトムス(ズボン)の名称>
-            }
-        ]
+        "coordinate_review": "<coordinateReviewのフォーマットに従って生成: String型>",
+
+        "review_using_bottoms": <画像のコーデのボトムス(ズボン)の特徴 と ボトムス(ズボン)に合うトップスorアウター と トップスorアウターが合うと考えた理由 を100文字以内で教えてください: String型>,
+        "bottoms": <画像のコーデのボトムス(ズボン)の名称: String型>,
+        "recommend_tops_or_outer": <ボトムス(ズボン)に合うトップスorアウターの名称: String型>,
+
+        "review_using_tops_or_outer": <画像のコーデのトップスorアウターの特徴 と トップスorアウターに合うボトムス(ズボン) と ボトムス(ズボン)が合うと考えた理由 を100文字以内で教えてください: String型>,
+        "tops_or_outer": <画像のコーデのトップスorアウターの名称: String型>,
+        "recommend_bottoms": <トップスorアウターに合うボトムス(ズボン)の名称: String型>,
     }
     """
     response = client.chat.completions.create(
@@ -167,6 +165,6 @@ async def coordinateReview(request: ImageRequest):
     coordinateResponse = CoordinateResponse(**openAIResponseJSON)
     print(coordinateResponse)
 
-    return ImageResponse(result = coordinateResponse.coordinateReview)
+    return ImageResponse(result = coordinateResponse.coordinate_review)
 
 
