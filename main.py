@@ -1,5 +1,6 @@
 import os
 import base64
+from typing import List
 from pydantic import BaseModel
 import requests
 
@@ -80,33 +81,66 @@ class ImageRequest(BaseModel):
 class ImageResponse(BaseModel):
     result: str
 
+class CoordinateReviewItem(BaseModel):
+    review: str
+    bottoms: str
+    recommend_tops_or_outer: str
+    tops_or_outer: str
+    recommend_bottoms: str
+
+class CoordinateResponse(BaseModel):
+    coordinateReview: str
+    RecommendItems: List[CoordinateReviewItem]
+
 @app.post("/coordinate-review", response_model = ImageResponse)
 async def coordinateReview(request: ImageRequest):
+    solver = """
+    あなたはプロのファッションコーディネータです。
+    豊富な経験と鋭い観察力で、与えられたコーデ画像をもとに、ユーザーの服装を分析し、着こなし方や色の組み合わせ、シルエットやサイズ感など、的確で具体的なアドバイスを提供します。
+    また、トレンド感のあるアイテムやスタイル提案にも精通しており、コーデ画像から季節感を考慮し、ユーザーの魅力を引き出す最適なコーディネートを提案できます。
+    """
     prompt = """
     添付する画像に合わせて、以下の質問に回答する形でコーデに関するコメントをください。
 
-    ## フォーマット
-    - ワンポイントアイテムを褒める <褒める>
-    例 : 白色のキャップが可愛いですね
-    - サイズ感についてのコメント
-    例 : ワイドなパンツを履いているのでラフでスマートな印象を受けます。\n上下のサイズがちょうど良いのでおしゃれな印象を受けます
-    - シルエット診断 <知見の共有>
-    例 : あなたのシルエットはIです。Iが似合うのは〜のような特徴を持った方です
-    - コーディネートタイプ診断 <知見の共有>
-    例 : また、あなたのコーデはカジュアルです。
-    - あなたに似合うコーディネートタイプは
-    例 : カジュアル が似合う方におすすめのコーデタイプは、ノームコアです。
-    
-    ## アウトプットのフォーマット（必ず文字列のみでアウトプットしてください）
+    ## coordinateReviewのフォーマット
     <ワンポイントアイテムを褒める>
     <サイズ感についてのコメント>
     <シルエット診断>
     <コーディネートタイプ診断>
     <あなたに似合うコーディネートタイプは>
+
+    ## coordinateReviewの出力例
+    白色のキャップが可愛いですね
+    ワイドなパンツを履いているのでラフでスマートな印象を受けます。\n上下のサイズがちょうど良いのでおしゃれな印象を受けます
+    あなたのシルエットはIです。Iが似合うのは〜のような特徴を持った方です
+    また、あなたのコーデはカジュアルです。
+    カジュアル が似合う方におすすめのコーデタイプは、ノームコアです。
+
+    
+    ## アウトプットのフォーマット（JSON形式でアウトプアットを生成してください）
+    {
+        "coordinateReview": "<coordinateReviewのフォーマットに従って生成>",
+        "RecommendItems": [
+            {
+                "review": <画像のコーデのボトムス(ズボン)の特徴 と ボトムス(ズボン)に合うトップスorアウター と トップスorアウターが合うと考えた理由 を100文字以内で教えてください>,
+                "bottoms": <画像のコーデのボトムス(ズボン)の名称>,
+                "recommend_tops_or_outer": <ボトムス(ズボン)に合うトップスorアウターの名称>
+            },
+            {
+                "review": <画像のコーデのトップスorアウターの特徴 と トップスorアウターに合うボトムス(ズボン) と ボトムス(ズボン)が合うと考えた理由 を100文字以内で教えてください>,
+                "tops_or_outer": <画像のコーデのトップスorアウターの名称>,
+                "recommend_bottoms": <トップスorアウターに合うボトムス(ズボン)の名称>
+            }
+        ]
+    }
     """
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
+            {
+                "role": "system",
+                "content": solver,
+            },
             {
                 "role": "user",
                 "content": [
@@ -120,10 +154,17 @@ async def coordinateReview(request: ImageRequest):
                 ]
             }
         ],
-        max_tokens=300,
+        response_format = {"type": "json_object"},
+        max_tokens = 300,
     )
     print(response.choices[0].message.content)
-    print(ImageResponse(result = response.choices[0].message.content))
-    return ImageResponse(result = response.choices[0].message.content)
+
+
+    openAIResponse = response.choices[0].message.content
+    openAIResponseJSON = json.loads(openAIResponse)
+    coordinateResponse = CoordinateResponse(**openAIResponseJSON)
+    print(coordinateResponse)
+    
+    return ImageResponse(result = coordinateResponse.coordinateReview)
 
 
