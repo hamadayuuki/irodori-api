@@ -123,13 +123,13 @@ async def coordinateReview(request: ImageRequest):
     
     ## アウトプットのフォーマット（JSON形式でアウトプアットを生成してください）
     {
-        "coordinate_review": "<coordinateReviewのフォーマットに従って生成: String型>",
+        "coordinate_review": "<coordinateReviewのフォーマットに従って生成してください。また、coordinateReviewの出力例を参考にしてください。出力例よりもクオリティーの高い、本質的な文章を生成してください。: String型>",
 
-        "review_using_bottoms": <画像のコーデのボトムス(ズボン)の特徴 と ボトムス(ズボン)に合うトップスorアウター と トップスorアウターが合うと考えた理由 を100文字以内で教えてください: String型>,
+        "review_using_bottoms": <画像のコーデのボトムスの特徴（生地感や色や大きさなど、本質的な特徴を捉えてください） と ボトムスに合うトップスorアウター(パーカー/スウェット/スプライトシャツ など具体的なアイテムを提案してください) と トップスorアウターが合うと考えた理由 を100文字以内で教えてください: String型>,
         "bottoms": <画像のコーデのボトムス(ズボン)の名称: String型>,
         "recommend_tops_or_outer": <ボトムス(ズボン)に合うトップスorアウターの名称: String型>,
 
-        "review_using_tops_or_outer": <画像のコーデのトップスorアウターの特徴 と トップスorアウターに合うボトムス(ズボン) と ボトムス(ズボン)が合うと考えた理由 を100文字以内で教えてください: String型>,
+        "review_using_tops_or_outer": <画像のコーデのトップスorアウターの特徴（生地感や色や大きさなど、本質的な特徴を捉えてください） と トップスorアウターに合うボトムス(デニムパンツ/ワイドパンツ/カーゴパンツ など具体的なアイテムを提案してください) と ボトムスが合うと考えた理由 を100文字以内で教えてください: String型>,
         "tops_or_outer": <画像のコーデのトップスorアウターの名称: String型>,
         "recommend_bottoms": <トップスorアウターに合うボトムス(ズボン)の名称: String型>,
     }
