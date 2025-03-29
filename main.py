@@ -102,6 +102,7 @@ async def coordinateReview(request: ImageRequest):
     prompt = """
     添付する画像に合わせて、アウトプットを生成してください.
     アウトプットはJSON形式です。Valueは全てString型ですので、"<>" のように " で囲んでください。
+    アウトプットがJSONの形式になっているか、ステップバイステップで確認してから、返答してください。
 
     ## coordinate_review のフォーマット
     <ワンポイントアイテムを褒める>
