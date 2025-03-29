@@ -103,7 +103,7 @@ async def coordinateReview(request: ImageRequest):
     添付する画像に合わせて、アウトプットを生成してください.
     アウトプットはJSON形式です。Valueは全てString型ですので、"<>" のように " で囲んでください。
 
-    ## coordinateReviewのフォーマット
+    ## coordinate_review のフォーマット
     <ワンポイントアイテムを褒める>
     <サイズ感についてのコメント>
     <シルエット診断>
@@ -111,7 +111,7 @@ async def coordinateReview(request: ImageRequest):
     <あなたのボトムスに合うトップスは>
     <あなたのトップスに合うボトムスは>
 
-    ## coordinateReviewの出力例
+    ## coordinate_review の出力例
     白色のキャップが可愛いですね
     ワイドなパンツを履いているのでラフでスマートな印象を受けます。\n上下のサイズがちょうど良いのでおしゃれな印象を受けます
     あなたのシルエットはIです。Iが似合うのは〜のような特徴を持った方です
@@ -134,11 +134,11 @@ async def coordinateReview(request: ImageRequest):
 
     ## アウトプットのフォーマット（JSON形式でアウトプアットを生成してください）
     {
-        "coordinate_review": "<coordinateReview>",
+        "coordinate_review": "<coordinate_review>",
         "recommend_tops": "<recommend_tops>",
         "tops_search_word": "<tops_search_word>",
         "recommend_bottoms": "<recommend_bottoms>",
-        "bottoms_search_word": "<bottoms_search_wor>"
+        "bottoms_search_word": "<bottoms_search_word>"
     }
     """
     response = client.chat.completions.create(
