@@ -2,6 +2,8 @@ import os
 import base64
 import json
 from typing import List
+import urllib
+import random
 
 from pydantic import BaseModel
 import requests
@@ -81,19 +83,33 @@ async def checkVisionGPT():
 class ImageRequest(BaseModel):
     image_base64: str
 class ImageResponse(BaseModel):
-    result: str
+    coordinate_review: str
+    coordinate_item01: str
+    recommend_item01: str
+    coordinate_item02: str
+    recommend_item02: str
+    coordinate_item03: str
+    recommend_item03: str
 
 
 class CoordinateResponse(BaseModel):
+    id: int
     coordinate_review: str
-    recommend_tops: str
-    tops_search_word: str
-    recommend_bottoms: str
-    bottoms_search_word: str
+    coordinate_item01: str
+    recommend_item01: str
+    recommend_item01_url: str
+    coordinate_item02: str
+    recommend_item02: str
+    recommend_item02_url: str
+    coordinate_item03: str
+    recommend_item03: str
+    recommend_item03_url: str
 
 
-@app.post("/coordinate-review", response_model = ImageResponse)
+@app.post("/coordinate-review", response_model = CoordinateResponse)
 async def coordinateReview(request: ImageRequest):
+    gender = "men"   # TODO: 動的化
+
     solver = """
     あなたはプロのファッションコーディネータです。
     豊富な経験と鋭い観察力で、与えられたコーデ画像をもとに、ユーザーの服装を分析し、着こなし方や色の組み合わせ、シルエットやサイズ感など、的確で具体的なアドバイスを提供します。
@@ -101,11 +117,14 @@ async def coordinateReview(request: ImageRequest):
     """
     prompt = """
     添付する画像に合わせて、アウトプットを生成してください.
-    アウトプットはJSON形式です。Valueは全てString型ですので、"<>" のように " で囲んでください。
+    アウトプットはJSON形式です。Valueは全てString型ですので、" で囲んでください。<> は動的データを示します。
     アウトプットがJSONの形式になっているか、ステップバイステップで確認してから、返答してください。
 
-    ## coordinate_review のフォーマット
-    <ワンポイントアイテムを褒める>
+    ## coordinate_review について
+    以下のフォーマットと出力例をもとに、300文字程度アウトプットしてください
+
+    ## coordinate_review のフォーマット(必ずこのフォーマット通りに出力してください)
+    <誰も気づかないようなワンポイントアイテムを褒める>
     <サイズ感についてのコメント>
     <シルエット診断>
     <コーディネートタイプ診断>
@@ -120,26 +139,33 @@ async def coordinateReview(request: ImageRequest):
     あなたの履いている黒色のワイドパンツに合うトップスはグレーのスウェットです。ワイドパンツなのでスウェットのサイズは少し小さめ良さそうです。
     また、あなたの着ているカーキの長袖シャツに合うボトムスは、黒色のカーゴパンツです。カーゴパンツはラフになりすぎるので、色は落ち着いた黒色をおすすめします。
 
-    ## recommend_tops の出力例
-    黒色のワイドパンツに合うトップスは『グレーのスウェット』
+    ## coordinate_item01 について
+    コーデで使われているアイテムをピックアップしてください。(coordinate_item02,03 でピックアップしたアイテムと重複してはいけない)
+    ピックアップしたアイテムについて述べてください。
+    ## coordinate_item01 出力例（ピックアップしたアイテムと別なアイテムをおすすめしてください。トップスをピックアップして、トップスをおすすめしてはいけません。）
+    黒色のスラックスパンツに合うのは...
 
-    ## tops_search_word の出力例
-    グレー スウェット
+    ## recommend_item01 について
+    coordinate_item01 でピックアップしたアイテムに合う、おすすめするアイテムを下記のように出力してください
+    ## recommend_item01 出力例（です。ます。を使わない）
+    花柄 長袖シャツ
 
-    ## recommend_bottoms の出力例
-    カーキの長袖シャツに合うボトムスは『黒色のカーゴパンツ』
 
-    ## bottoms_search_word の出力例
-    黒色 カーゴパンツ
+    ## coordinate_item02,03 について
+    coordinate_item01 を参考にして出力してください。01,02,03 でアイテムが重複しないようにしてください。
+    ## recommend_item02,03 について
+    recommend_item01 を参考にして出力してください
 
 
     ## アウトプットのフォーマット（JSON形式でアウトプアットを生成してください）
     {
         "coordinate_review": "<coordinate_review>",
-        "recommend_tops": "<recommend_tops>",
-        "tops_search_word": "<tops_search_word>",
-        "recommend_bottoms": "<recommend_bottoms>",
-        "bottoms_search_word": "<bottoms_search_word>"
+        "coordinate_item01": "<coordinate_item01>",
+        "recommend_item01": "<recommend_item01>",
+        "coordinate_item02": "<coordinate_item02>",
+        "recommend_item02": "<recommend_item02>",
+        "coordinate_item03": "<coordinate_item03>",
+        "recommend_item03": "<recommend_item03>",
     }
     """
     response = client.chat.completions.create(
@@ -163,16 +189,42 @@ async def coordinateReview(request: ImageRequest):
             }
         ],
         response_format = {"type": "json_object"},
-        max_tokens = 500,
+        max_tokens = 1000,
     )
     print(response.choices[0].message.content)
 
-
     openAIResponse = response.choices[0].message.content
     openAIResponseJSON = json.loads(openAIResponse)
-    coordinateResponse = CoordinateResponse(**openAIResponseJSON)
+    imageResponse = ImageResponse(**openAIResponseJSON)
+
+
+    coordinate_item02: str
+    recommend_item02: str
+    recommend_item02_url: str
+    coordinate_item03: str
+    recommend_item03: str
+    recommend_item03_url: str
+
+    coordinateResponse = CoordinateResponse(
+        id = random.randrange(10**10),
+
+        coordinate_review = imageResponse.coordinate_review,   # coordinate_review
+
+        coordinate_item01 = imageResponse.coordinate_item01,   # coordinate_item01
+        recommend_item01 = imageResponse.recommend_item01,   # recommend_item01
+        recommend_item01_url = f"https://zozo.jp/search/?sex={gender}&p_keyv={urllib.parse.quote(imageResponse.recommend_item01, encoding='shift_jis')}",   # recommend_item01_url
+
+        coordinate_item02 = imageResponse.coordinate_item02,
+        recommend_item02 = imageResponse.recommend_item02,
+        recommend_item02_url = f"https://zozo.jp/search/?sex={gender}&p_keyv={urllib.parse.quote(imageResponse.recommend_item02, encoding='shift_jis')}",
+
+        coordinate_item03 = imageResponse.coordinate_item03,
+        recommend_item03 = imageResponse.recommend_item03,
+        recommend_item03_url = f"https://zozo.jp/search/?sex={gender}&p_keyv={urllib.parse.quote(imageResponse.recommend_item03, encoding='shift_jis')}"
+    )
     print(coordinateResponse)
 
-    return ImageResponse(result = coordinateResponse.coordinate_review)
+    return coordinateResponse
+
 
 
