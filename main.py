@@ -121,6 +121,7 @@ async def coordinateReview(request: ImageRequest):
     ・口調は親近感を持つようなアドバイスしたりする口調にしてください。
     ・基本的にはポジティブな印象を与え、coordinate_reviewの最後はワンポイントアドバイスをお願いします。
     ・出力形式は必ず守ってください。
+    ・出力に <> は含めないでください
     """
 
     if request.outing_purpose_id == 0:
