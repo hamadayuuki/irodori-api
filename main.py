@@ -158,7 +158,7 @@ async def coordinateReview(request: ImageRequest):
     print(response.choices[0].message.content)
 
     text = response.choices[0].message.content
-    catchphrase, comment = TextParser.parse_input(text)
+    catchphrase, comment = parse_input(text)
 
     coordinateResponse = CoordinateResponse(
         id = random.randrange(10**10),
