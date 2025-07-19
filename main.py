@@ -88,8 +88,6 @@ def parse_input(text: str) -> tuple[str, str]:
 
 class ImageRequest(BaseModel):
     image_base64: str
-class ImageResponse(BaseModel):
-    response: str
 
 
 class CoordinateResponse(BaseModel):
@@ -159,10 +157,8 @@ async def coordinateReview(request: ImageRequest):
     )
     print(response.choices[0].message.content)
 
-    openAIResponse = response.choices[0].message.content
-    openAIResponseJSON = json.loads(openAIResponse)
-    imageResponse = ImageResponse(**openAIResponseJSON)
-    catchphrase, comment = TextParser.parse_input(imageResponse.response)
+    text = response.choices[0].message.content
+    catchphrase, comment = TextParser.parse_input(text)
 
     coordinateResponse = CoordinateResponse(
         id = random.randrange(10**10),
