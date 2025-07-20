@@ -15,7 +15,7 @@ from openai import OpenAI
 client = OpenAI(
     api_key = os.getenv('OPENAI_API_KEY')
 )
-gptModel = "gpt-4o-mini"
+gptModel = "gpt-4o"
 
 @app.get("/")
 async def root():
