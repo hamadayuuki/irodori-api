@@ -43,7 +43,7 @@ class CoordinateService:
         return coordinates
     
     @staticmethod
-    def group_by_genre_and_select_random(coordinates: List[CoordinateItem], file_paths: List[str]) -> List[CoordinateItem]:
+    def group_by_genre_and_select_random(coordinates: List[CoordinateItem], file_paths: List[str]) -> Dict:
         # genreでグループ化するため、CSVを再読み込みしてgenre情報を取得
         genre_groups = defaultdict(list)
         
@@ -63,21 +63,32 @@ class CoordinateService:
             except Exception as e:
                 print(f"Error reading CSV file {file_path} for genre grouping: {e}")
         
-        # 各genreからランダムで選択し、最大10個まで
-        selected_coordinates = []
+        # 全てのコーディネートからランダムに10件選択
+        all_coordinates = []
+        for coords in genre_groups.values():
+            all_coordinates.extend(coords)
         
-        for genre, coords in genre_groups.items():
-            if coords:
-                # 各genreから1つずつランダム選択
-                selected = random.choice(coords)
-                selected_coordinates.append(selected)
+        # 利用可能なコーディネートをシャッフル
+        random.shuffle(all_coordinates)
+        selected_coordinates = all_coordinates[:10]
         
-        # 結果をシャッフルして最大10個まで
-        random.shuffle(selected_coordinates)
-        return selected_coordinates[:10]
+        final_coordinates = selected_coordinates
+        
+        # 最終的に選択された10個のコーディネートのジャンル別件数を取得
+        genre_counts = {}
+        for coord in final_coordinates:
+            for genre, coords in genre_groups.items():
+                if coord in coords:
+                    genre_counts[genre] = genre_counts.get(genre, 0) + 1
+                    break
+        
+        return {
+            'coordinates': final_coordinates,
+            'genres': genre_counts
+        }
     
     @staticmethod
-    def recommend_coordinates(gender: Gender) -> List[CoordinateItem]:
+    def recommend_coordinates(gender: Gender) -> Dict:
         # 1. genderに基づいてCSVファイルを読み込み
         coordinates = CoordinateService.get_coordinates_by_gender(gender)
         

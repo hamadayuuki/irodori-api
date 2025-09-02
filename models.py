@@ -19,5 +19,11 @@ class CoordinateItem(BaseModel):
     pin_url_guess: str
 
 
+class GenreCount(BaseModel):
+    genre: str
+    count: int
+
+
 class RecommendCoordinatesResponse(BaseModel):
     coordinates: List[CoordinateItem]
+    genres: List[GenreCount]

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 import requests
 
 from fastapi import FastAPI
-from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse
+from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount
 from coordinate_service import CoordinateService
 app = FastAPI()
 
@@ -276,8 +276,12 @@ async def analysisCoordinate(request: AnalysisCoordinateRequest):
 
 @app.post("/recommend-coordinates", response_model=RecommendCoordinatesResponse)
 async def recommend_coordinates(request: RecommendCoordinatesRequest):
-    coordinates = CoordinateService.recommend_coordinates(request.gender)
-    return RecommendCoordinatesResponse(coordinates=coordinates)
+    result = CoordinateService.recommend_coordinates(request.gender)
+    genres_with_count = [GenreCount(genre=genre, count=count) for genre, count in result['genres'].items()]
+    return RecommendCoordinatesResponse(
+        coordinates=result['coordinates'],
+        genres=genres_with_count
+    )
 
 @app.get("/health/recommend-coordinates")
 async def health_recommend_coordinates():
@@ -291,6 +295,7 @@ async def health_recommend_coordinates():
         # コンソールに出力
         print("Health check result for recommend-coordinates:")
         print(f"Number of coordinates: {len(result.coordinates)}")
+        print(f"Genres: {[f'{g.genre}({g.count})' for g in result.genres]}")
         for i, coord in enumerate(result.coordinates):
             print(f"  {i+1}. ID: {coord.id}, URL: {coord.image_url}")
         
