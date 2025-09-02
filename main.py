@@ -1,14 +1,17 @@
 import os
 import base64
 import json
-from typing import List
+from typing import List, Optional
 import urllib
+import urllib.parse
 import random
 
 from pydantic import BaseModel
 import requests
 
 from fastapi import FastAPI
+from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse
+from coordinate_service import CoordinateService
 app = FastAPI()
 
 from openai import OpenAI
@@ -75,7 +78,7 @@ async def checkVisionGPT():
                 ]
             }
         ],
-        max_tokens=300,
+        max_completion_tokens=300,
     )
     return {"result": response.choices[0].message.content}
 
@@ -153,7 +156,7 @@ async def coordinateReview(request: ImageRequest):
                 ]
             }
         ],
-        max_tokens = 2048,
+        max_completion_tokens = 2048,
     )
     print(response.choices[0].message.content)
 
@@ -169,5 +172,176 @@ async def coordinateReview(request: ImageRequest):
 
     return coordinateResponse
 
+# AnalysisCoordinate
 
+class AnalysisCoordinateRequest(BaseModel):
+    image_base64: str
+    gender: str    # men, women, other
 
+class AnalysisCoordinateResponse(BaseModel):
+    id: int
+    coordinate_review: Optional[str] = None
+    tops_categorize: Optional[str] = None
+    bottoms_categorize: Optional[str] = None
+
+@app.post("/analysis-coordinate", response_model = AnalysisCoordinateResponse)
+async def analysisCoordinate(request: AnalysisCoordinateRequest):
+    system_prompt = """
+    あなたはプロのファッションコーディネーターです。服飾の知識が豊富です。
+    必ずJSON形式で回答してください。jsonのvalueには可能な限り日本語を使ってください。
+    """
+
+    prompt = """
+    添付する全身画像を解析し、以下のJSON形式で回答してください。
+
+    ## 出力形式（必ずJSON形式）
+    {
+        "coordinate_review": "コーディネート全体の印象やレビューを150〜200文字程度で記述。回答するときはコーディネートを対象にすることが重要です背景等は判断に含めないようにしてください。",
+        "tops_categorize": "トップスのカテゴリを <アイテム名> <柄(分かるなら記載する)> <サイズ(分かるなら記載する)> <カラー>（例：パンツ ストライプ ワイド ブラック）",
+        "bottoms_categorize": "ボトムスのカテゴリ <アイテム名> <柄(分かるなら記載する)> <サイズ(分かるなら記載する)> <カラー>（例：Tシャツ タイト ホワイト）"
+    }
+
+    ## 注意事項
+    - 必ずJSON形式で回答してください
+    - 他の形式での回答は禁止です
+    - JSONの値は全て文字列型です
+    """
+
+    response = client.chat.completions.create(
+        model="gpt-5-nano",
+        messages=[
+            {
+                "role": "system",
+                "content": system_prompt,
+            },
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{request.image_base64}"
+                        }
+                    }
+                ]
+            }
+        ],
+        max_completion_tokens = 4096,
+        response_format={"type": "json_object"}
+    )
+    print(response.choices[0].message.content)
+
+    # JSONレスポンスをパース
+    try:
+        response_data = json.loads(response.choices[0].message.content)
+        
+        # topsとbottoms用のZOZO URLを生成
+        tops_url = None
+        bottoms_url = None
+        
+        # sexがotherの場合はmenに変換
+        sex_param = "men" if request.gender == "other" else request.gender
+        
+        if response_data.get("tops_categorize", "") != "":
+            tops_text = response_data.get("tops_categorize", "")
+            tops_encoded = urllib.parse.quote(tops_text, encoding='utf-8')
+            #print(tops_encoded)
+            tops_url = f"https://zozo.jp/search/?sex={sex_param}&p_keyv={tops_encoded}"
+
+        if response_data.get("bottoms_categorize", "") != "":
+            bottoms_text = response_data.get("bottoms_categorize", "")
+            bottoms_encoded = urllib.parse.quote(bottoms_text, encoding='utf-8')
+            #print(bottoms_encoded)
+            bottoms_url = f"https://zozo.jp/search/?sex={sex_param}&p_keyv={bottoms_encoded}"
+        
+        analysisResponse = AnalysisCoordinateResponse(
+            id = random.randrange(10**10),
+            coordinate_review = response_data.get("coordinate_review"),
+            tops_categorize = tops_url,
+            bottoms_categorize = bottoms_url
+        )
+    except json.JSONDecodeError:
+        # JSONパースに失敗した場合はNoneを返す
+        analysisResponse = AnalysisCoordinateResponse(
+            id = random.randrange(10**10),
+            coordinate_review = None,
+            tops_categorize = None,
+            bottoms_categorize = None
+        )
+    
+    print(analysisResponse)
+
+    return analysisResponse
+
+@app.post("/recommend-coordinates", response_model=RecommendCoordinatesResponse)
+async def recommend_coordinates(request: RecommendCoordinatesRequest):
+    coordinates = CoordinateService.recommend_coordinates(request.gender)
+    return RecommendCoordinatesResponse(coordinates=coordinates)
+
+@app.get("/health/recommend-coordinates")
+async def health_recommend_coordinates():
+    try:
+        # テスト用リクエストを作成
+        test_request = RecommendCoordinatesRequest(gender="men")
+        
+        # recommend_coordinates関数を呼び出し
+        result = await recommend_coordinates(test_request)
+        
+        # コンソールに出力
+        print("Health check result for recommend-coordinates:")
+        print(f"Number of coordinates: {len(result.coordinates)}")
+        for i, coord in enumerate(result.coordinates):
+            print(f"  {i+1}. ID: {coord.id}, URL: {coord.image_url}")
+        
+        return {
+            "status": "success",
+            "message": "recommend-coordinates endpoint test completed",
+            "result": result
+        }
+        
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+@app.get("/health/analysis-coordinate")
+async def healthAnalysisCoordinate():
+    # テスト用画像を読み込み
+    image_path = "test/image/coordinate.jpg"
+    
+    try:
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+        
+        # AnalysisCoordinateRequestを作成
+        test_request = AnalysisCoordinateRequest(
+            image_base64=image_base64,
+            gender="other"
+        )
+        
+        # analysisCoordinate関数を呼び出し
+        result = await analysisCoordinate(test_request)
+        
+        return {
+            "status": "success",
+            "message": "analysis-coordinate endpoint test completed",
+            "result": result
+        }
+        
+    except FileNotFoundError:
+        return {
+            "status": "error",
+            "message": f"Test image not found: {image_path}",
+            "result": None
+        }
+    except Exception as e:
+        return {
+            "status": "error", 
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
