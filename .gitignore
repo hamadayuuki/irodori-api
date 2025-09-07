@@ -220,3 +220,6 @@ __marimo__/
 
 # MCP
 .serena
+
+# shell
+*.sh
