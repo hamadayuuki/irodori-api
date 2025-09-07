@@ -15,7 +15,7 @@ from coordinate_service import CoordinateService
 
 # AnalysisCoordinate Models
 class AnalysisCoordinateRequest(BaseModel):
-    image_id: str
+    image_id: int
     gender: str    # men, women, other
 
 class AnalysisCoordinateResponse(BaseModel):
@@ -261,7 +261,7 @@ async def analysisCoordinate(request: AnalysisCoordinateRequest):
         # image_idに一致するコーディネートを検索
         selected_coordinate = None
         for coordinate in coordinates:
-            if coordinate.get("id") == request.image_id:
+            if int(coordinate.get("id")) == request.image_id:
                 selected_coordinate = coordinate
                 break
         
@@ -280,7 +280,7 @@ async def analysisCoordinate(request: AnalysisCoordinateRequest):
         print(f"Error loading local data: {e}")
         # エラーが発生した場合は空のレスポンスを返す
         analysisResponse = AnalysisCoordinateResponse(
-            id = int(request.image_id) if request.image_id.isdigit() else random.randrange(10**10),
+            id = request.image_id,
             coordinate_review = f"Error: {str(e)}",
             tops_categorize = None,
             bottoms_categorize = None
