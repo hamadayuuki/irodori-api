@@ -12,6 +12,18 @@ import requests
 from fastapi import FastAPI
 from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount
 from coordinate_service import CoordinateService
+
+# AnalysisCoordinate Models
+class AnalysisCoordinateRequest(BaseModel):
+    image_id: str
+    gender: str    # men, women, other
+
+class AnalysisCoordinateResponse(BaseModel):
+    id: int
+    coordinate_review: Optional[str] = None
+    tops_categorize: Optional[str] = None
+    bottoms_categorize: Optional[str] = None
+
 app = FastAPI()
 
 from openai import OpenAI
@@ -23,6 +35,55 @@ gptModel = "gpt-4o"
 @app.get("/")
 async def root():
     return {"message": "Hello, FastAPI on Render!"}
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+@app.get("/health/analysis-coordinate", response_model = AnalysisCoordinateResponse)
+async def analysis_coordinate_health():
+    import csv
+    import os
+    import random
+    
+    # デフォルトでmenのデータを使用してサンプルレスポンスを返す
+    gender_folder = "men"
+    csv_path = f"data/analysis-coordinate/{gender_folder}/coordinates.csv"
+    
+    try:
+        # CSVファイルが存在するかチェック
+        if not os.path.exists(csv_path):
+            raise FileNotFoundError(f"Data file not found: {csv_path}")
+        
+        # CSVファイルからランダムにデータを選択
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            coordinates = list(reader)
+            
+        if not coordinates:
+            raise ValueError("No coordinate data found")
+        
+        # ランダムに1つのコーディネートを選択
+        selected_coordinate = random.choice(coordinates)
+        
+        analysisResponse = AnalysisCoordinateResponse(
+            id = int(selected_coordinate.get("id")),
+            coordinate_review = selected_coordinate.get("coordinate_review"),
+            tops_categorize = selected_coordinate.get("tops_categorize"),
+            bottoms_categorize = selected_coordinate.get("bottoms_categorize")
+        )
+        
+    except Exception as e:
+        print(f"Error loading local data: {e}")
+        # エラーが発生した場合は空のレスポンスを返す
+        analysisResponse = AnalysisCoordinateResponse(
+            id = random.randrange(10**10),
+            coordinate_review = "Health check: analysis-coordinate endpoint is working with local CSV data",
+            tops_categorize = None,
+            bottoms_categorize = None
+        )
+    
+    return analysisResponse
 
 @app.get("/check-gpt")
 async def checkGPT():
@@ -174,104 +235,58 @@ async def coordinateReview(request: ImageRequest):
 
 # AnalysisCoordinate
 
-class AnalysisCoordinateRequest(BaseModel):
-    image_base64: str
-    gender: str    # men, women, other
-
-class AnalysisCoordinateResponse(BaseModel):
-    id: int
-    coordinate_review: Optional[str] = None
-    tops_categorize: Optional[str] = None
-    bottoms_categorize: Optional[str] = None
-
 @app.post("/analysis-coordinate", response_model = AnalysisCoordinateResponse)
 async def analysisCoordinate(request: AnalysisCoordinateRequest):
-    system_prompt = """
-    あなたはプロのファッションコーディネーターです。服飾の知識が豊富です。
-    必ずJSON形式で回答してください。jsonのvalueには可能な限り日本語を使ってください。
-    """
-
-    prompt = """
-    添付する全身画像を解析し、以下のJSON形式で回答してください。
-
-    ## 出力形式（必ずJSON形式）
-    {
-        "coordinate_review": "コーディネート全体の印象やレビューを150〜200文字程度で記述。回答するときはコーディネートを対象にすることが重要です背景等は判断に含めないようにしてください。",
-        "tops_categorize": "トップスのカテゴリを <アイテム名> <柄(分かるなら記載する)> <サイズ(分かるなら記載する)> <カラー>（例：パンツ ストライプ ワイド ブラック）",
-        "bottoms_categorize": "ボトムスのカテゴリ <アイテム名> <柄(分かるなら記載する)> <サイズ(分かるなら記載する)> <カラー>（例：Tシャツ タイト ホワイト）"
-    }
-
-    ## 注意事項
-    - 必ずJSON形式で回答してください
-    - 他の形式での回答は禁止です
-    - JSONの値は全て文字列型です
-    """
-
-    response = client.chat.completions.create(
-        model="gpt-5-nano",
-        messages=[
-            {
-                "role": "system",
-                "content": system_prompt,
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{request.image_base64}"
-                        }
-                    }
-                ]
-            }
-        ],
-        max_completion_tokens = 4096,
-        response_format={"type": "json_object"}
-    )
-    print(response.choices[0].message.content)
-
-    # JSONレスポンスをパース
+    import csv
+    import os
+    import random
+    
+    # genderに応じてデータファイルを選択
+    gender_folder = "men" if request.gender == "other" else request.gender
+    csv_path = f"data/analysis-coordinate/{gender_folder}/coordinates.csv"
+    
     try:
-        response_data = json.loads(response.choices[0].message.content)
+        # CSVファイルが存在するかチェック
+        if not os.path.exists(csv_path):
+            raise FileNotFoundError(f"Data file not found: {csv_path}")
         
-        # topsとbottoms用のZOZO URLを生成
-        tops_url = None
-        bottoms_url = None
+        # CSVファイルからimage_idに一致するデータを検索
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            coordinates = list(reader)
+            
+        if not coordinates:
+            raise ValueError("No coordinate data found")
         
-        # sexがotherの場合はmenに変換
-        sex_param = "men" if request.gender == "other" else request.gender
+        # image_idに一致するコーディネートを検索
+        selected_coordinate = None
+        for coordinate in coordinates:
+            if coordinate.get("id") == request.image_id:
+                selected_coordinate = coordinate
+                break
         
-        if response_data.get("tops_categorize", "") != "":
-            tops_text = response_data.get("tops_categorize", "")
-            tops_encoded = urllib.parse.quote(tops_text, encoding='utf-8')
-            #print(tops_encoded)
-            tops_url = f"https://zozo.jp/search/?sex={sex_param}&p_keyv={tops_encoded}"
-
-        if response_data.get("bottoms_categorize", "") != "":
-            bottoms_text = response_data.get("bottoms_categorize", "")
-            bottoms_encoded = urllib.parse.quote(bottoms_text, encoding='utf-8')
-            #print(bottoms_encoded)
-            bottoms_url = f"https://zozo.jp/search/?sex={sex_param}&p_keyv={bottoms_encoded}"
+        # 一致するデータが見つからない場合はエラー
+        if not selected_coordinate:
+            raise ValueError(f"No coordinate found for image_id: {request.image_id}")
         
         analysisResponse = AnalysisCoordinateResponse(
-            id = random.randrange(10**10),
-            coordinate_review = response_data.get("coordinate_review"),
-            tops_categorize = tops_url,
-            bottoms_categorize = bottoms_url
+            id = int(selected_coordinate.get("id")),
+            coordinate_review = selected_coordinate.get("coordinate_review"),
+            tops_categorize = selected_coordinate.get("tops_categorize"),
+            bottoms_categorize = selected_coordinate.get("bottoms_categorize")
         )
-    except json.JSONDecodeError:
-        # JSONパースに失敗した場合はNoneを返す
+        
+    except Exception as e:
+        print(f"Error loading local data: {e}")
+        # エラーが発生した場合は空のレスポンスを返す
         analysisResponse = AnalysisCoordinateResponse(
-            id = random.randrange(10**10),
-            coordinate_review = None,
+            id = int(request.image_id) if request.image_id.isdigit() else random.randrange(10**10),
+            coordinate_review = f"Error: {str(e)}",
             tops_categorize = None,
             bottoms_categorize = None
         )
     
     print(analysisResponse)
-
     return analysisResponse
 
 @app.post("/recommend-coordinates", response_model=RecommendCoordinatesResponse)

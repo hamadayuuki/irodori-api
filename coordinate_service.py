@@ -12,11 +12,11 @@ class CoordinateService:
         
         if gender == Gender.other:
             # otherの場合はmenとwomenの両方を取得
-            coordinates.extend(CoordinateService._read_csv_file("data/men/coordinates.csv"))
-            coordinates.extend(CoordinateService._read_csv_file("data/women/coordinates.csv"))
+            coordinates.extend(CoordinateService._read_csv_file("data/recommend-coordinate/men/coordinates.csv"))
+            coordinates.extend(CoordinateService._read_csv_file("data/recommend-coordinate/women/coordinates.csv"))
         else:
             # men または women の場合
-            file_path = f"data/{gender.value}/coordinates.csv"
+            file_path = f"data/recommend-coordinate/{gender.value}/coordinates.csv"
             coordinates = CoordinateService._read_csv_file(file_path)
         
         return coordinates
@@ -95,9 +95,9 @@ class CoordinateService:
         # 2. ファイルパスを決定
         file_paths = []
         if gender == Gender.other:
-            file_paths = ["data/men/coordinates.csv", "data/women/coordinates.csv"]
+            file_paths = ["data/recommend-coordinate/men/coordinates.csv", "data/recommend-coordinate/women/coordinates.csv"]
         else:
-            file_paths = [f"data/{gender.value}/coordinates.csv"]
+            file_paths = [f"data/recommend-coordinate/{gender.value}/coordinates.csv"]
         
         # 3. genreでグループ化してランダム選択
         return CoordinateService.group_by_genre_and_select_random(coordinates, file_paths)
