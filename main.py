@@ -10,19 +10,14 @@ from pydantic import BaseModel
 import requests
 
 from fastapi import FastAPI
-from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount
+from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount, AnalysisCoordinateResponse, AffiliateProduct
 from coordinate_service import CoordinateService
+from yahoo_shopping import YahooShoppingClient
 
 # AnalysisCoordinate Models
 class AnalysisCoordinateRequest(BaseModel):
     image_id: int
     gender: str    # men, women, other
-
-class AnalysisCoordinateResponse(BaseModel):
-    id: int
-    coordinate_review: Optional[str] = None
-    tops_categorize: Optional[str] = None
-    bottoms_categorize: Optional[str] = None
 
 app = FastAPI()
 
@@ -73,6 +68,22 @@ async def analysis_coordinate_health():
             bottoms_categorize = selected_coordinate.get("bottoms_categorize")
         )
         
+        # Yahoo Shopping API統合（health checkでも同じ処理を追加）
+        yahoo_client = YahooShoppingClient()
+        gender_jp = "メンズ"  # health checkではデフォルトでメンズを使用
+        
+        # トップス商品検索
+        if analysisResponse.tops_categorize:
+            tops_query = yahoo_client.extract_search_keywords(analysisResponse.tops_categorize)
+            tops_products = yahoo_client.search_products(tops_query, gender_jp, 15)
+            analysisResponse.affiliate_tops = [AffiliateProduct(**product) for product in tops_products]
+        
+        # ボトムス商品検索  
+        if analysisResponse.bottoms_categorize:
+            bottoms_query = yahoo_client.extract_search_keywords(analysisResponse.bottoms_categorize)
+            bottoms_products = yahoo_client.search_products(bottoms_query, gender_jp, 15)
+            analysisResponse.affiliate_bottoms = [AffiliateProduct(**product) for product in bottoms_products]
+        
     except Exception as e:
         print(f"Error loading local data: {e}")
         # エラーが発生した場合は空のレスポンスを返す
@@ -80,7 +91,9 @@ async def analysis_coordinate_health():
             id = random.randrange(10**10),
             coordinate_review = "Health check: analysis-coordinate endpoint is working with local CSV data",
             tops_categorize = None,
-            bottoms_categorize = None
+            bottoms_categorize = None,
+            affiliate_tops = [],
+            affiliate_bottoms = []
         )
     
     return analysisResponse
@@ -276,6 +289,22 @@ async def analysisCoordinate(request: AnalysisCoordinateRequest):
             bottoms_categorize = selected_coordinate.get("bottoms_categorize")
         )
         
+        # Yahoo Shopping API統合
+        yahoo_client = YahooShoppingClient()
+        gender_jp = "メンズ" if request.gender == "men" else "レディース" if request.gender == "women" else "メンズ"
+        
+        # トップス商品検索
+        if analysisResponse.tops_categorize:
+            tops_query = yahoo_client.extract_search_keywords(analysisResponse.tops_categorize)
+            tops_products = yahoo_client.search_products(tops_query, gender_jp, 15)
+            analysisResponse.affiliate_tops = [AffiliateProduct(**product) for product in tops_products]
+        
+        # ボトムス商品検索
+        if analysisResponse.bottoms_categorize:
+            bottoms_query = yahoo_client.extract_search_keywords(analysisResponse.bottoms_categorize)
+            bottoms_products = yahoo_client.search_products(bottoms_query, gender_jp, 15)
+            analysisResponse.affiliate_bottoms = [AffiliateProduct(**product) for product in bottoms_products]
+        
     except Exception as e:
         print(f"Error loading local data: {e}")
         # エラーが発生した場合は空のレスポンスを返す
@@ -283,7 +312,9 @@ async def analysisCoordinate(request: AnalysisCoordinateRequest):
             id = request.image_id,
             coordinate_review = f"Error: {str(e)}",
             tops_categorize = None,
-            bottoms_categorize = None
+            bottoms_categorize = None,
+            affiliate_tops = [],
+            affiliate_bottoms = []
         )
     
     print(analysisResponse)
@@ -313,6 +344,10 @@ async def health_recommend_coordinates():
         print(f"Genres: {[f'{g.genre}({g.count})' for g in result.genres]}")
         for i, coord in enumerate(result.coordinates):
             print(f"  {i+1}. ID: {coord.id}, URL: {coord.image_url}")
+            print(f"      Tops: {coord.tops_categorize}")
+            print(f"      Bottoms: {coord.bottoms_categorize}")
+            print(f"      Affiliate tops: {len(coord.affiliate_tops)} products")
+            print(f"      Affiliate bottoms: {len(coord.affiliate_bottoms)} products")
         
         return {
             "status": "success",

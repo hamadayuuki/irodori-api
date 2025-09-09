@@ -2,7 +2,8 @@ import csv
 import random
 from typing import List, Dict
 from collections import defaultdict
-from models import CoordinateItem, Gender
+from models import CoordinateItem, Gender, AffiliateProduct
+from yahoo_shopping import YahooShoppingClient
 
 
 class CoordinateService:
@@ -32,7 +33,9 @@ class CoordinateService:
                     coordinate = CoordinateItem(
                         id=int(row['id']),
                         image_url=row['image_url'],
-                        pin_url_guess=row['pin_url_guess']
+                        pin_url_guess=row['pin_url_guess'],
+                        tops_categorize=row.get('tops_categorize', ''),
+                        bottoms_categorize=row.get('bottoms_categorize', '')
                     )
                     coordinates.append(coordinate)
         except FileNotFoundError:
@@ -100,4 +103,22 @@ class CoordinateService:
             file_paths = [f"data/analysis-coordinate/{gender.value}/coordinates.csv"]
         
         # 3. genreでグループ化してランダム選択
-        return CoordinateService.group_by_genre_and_select_random(coordinates, file_paths)
+        result = CoordinateService.group_by_genre_and_select_random(coordinates, file_paths)
+        
+        # 4. Yahoo商品検索を追加
+        yahoo_client = YahooShoppingClient()
+        gender_jp = "メンズ" if gender.value == "men" else "レディース" if gender.value == "women" else "メンズ"
+        
+        for coord in result['coordinates']:
+            # トップス商品検索
+            if coord.tops_categorize:
+                tops_query = yahoo_client.extract_search_keywords(coord.tops_categorize)
+                tops_products = yahoo_client.search_products(tops_query, gender_jp, 5)
+                coord.affiliate_tops = [AffiliateProduct(**product) for product in tops_products]
+            
+            # ボトムス商品検索
+            if coord.bottoms_categorize:
+                bottoms_query = yahoo_client.extract_search_keywords(coord.bottoms_categorize)
+                bottoms_products = yahoo_client.search_products(bottoms_query, gender_jp, 5)
+                coord.affiliate_bottoms = [AffiliateProduct(**product) for product in bottoms_products]
+        return result
