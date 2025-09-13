@@ -25,6 +25,7 @@ class CoordinateItem(BaseModel):
     id: int
     image_url: str
     pin_url_guess: str
+    coordinate_review: Optional[str] = None
     tops_categorize: Optional[str] = None
     bottoms_categorize: Optional[str] = None
     affiliate_tops: List[AffiliateProduct] = []

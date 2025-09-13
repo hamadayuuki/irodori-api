@@ -34,6 +34,7 @@ class CoordinateService:
                         id=int(row['id']),
                         image_url=row['image_url'],
                         pin_url_guess=row['pin_url_guess'],
+                        coordinate_review=row.get('coordinate_review', ''),
                         tops_categorize=row.get('tops_categorize', ''),
                         bottoms_categorize=row.get('bottoms_categorize', '')
                     )
@@ -66,18 +67,18 @@ class CoordinateService:
             except Exception as e:
                 print(f"Error reading CSV file {file_path} for genre grouping: {e}")
         
-        # 全てのコーディネートからランダムに10件選択
+        # 全てのコーディネートからランダムに3件選択
         all_coordinates = []
         for coords in genre_groups.values():
             all_coordinates.extend(coords)
         
         # 利用可能なコーディネートをシャッフル
         random.shuffle(all_coordinates)
-        selected_coordinates = all_coordinates[:10]
+        selected_coordinates = all_coordinates[:3]
         
         final_coordinates = selected_coordinates
         
-        # 最終的に選択された10個のコーディネートのジャンル別件数を取得
+        # 最終的に選択された3個のコーディネートのジャンル別件数を取得
         genre_counts = {}
         for coord in final_coordinates:
             for genre, coords in genre_groups.items():
@@ -113,12 +114,12 @@ class CoordinateService:
             # トップス商品検索
             if coord.tops_categorize:
                 tops_query = yahoo_client.extract_search_keywords(coord.tops_categorize)
-                tops_products = yahoo_client.search_products(tops_query, gender_jp, 5)
+                tops_products = yahoo_client.search_products(tops_query, gender_jp, 15)
                 coord.affiliate_tops = [AffiliateProduct(**product) for product in tops_products]
             
             # ボトムス商品検索
             if coord.bottoms_categorize:
                 bottoms_query = yahoo_client.extract_search_keywords(coord.bottoms_categorize)
-                bottoms_products = yahoo_client.search_products(bottoms_query, gender_jp, 5)
+                bottoms_products = yahoo_client.search_products(bottoms_query, gender_jp, 15)
                 coord.affiliate_bottoms = [AffiliateProduct(**product) for product in bottoms_products]
         return result
