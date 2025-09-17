@@ -12,7 +12,7 @@ from openai import OpenAI
 class CoordinateAnalyzer:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-        self.gpt_model = "gpt-5-nano"
+        self.gpt_model = "gpt-4o"
         
     def read_coordinates_csv(self, file_path: str) -> List[Dict]:
         """coordinates.csvからidとimage_urlを取得"""
@@ -57,14 +57,10 @@ class CoordinateAnalyzer:
 
         ## 出力形式（必ずJSON形式）
         {
-            "coordinate_review": "コーディネート全体の印象を100文字程度で記述。回答するときはコーディネートを対象にすることが重要です背景等は判断に含めないようにしてください。",
-            "tops_categorize": "トップスのカテゴリを <アイテム名> <柄(無い場合は無地)> <サイズ感(分かるなら記載する, )> <カラー>（例：パンツ ストライプ ワイド ブラック）",
-            "bottoms_categorize": "ボトムスのカテゴリ <アイテム名> <柄(無い場合は無地)> <サイズ感(分かるなら記載する)> <カラー>（例：Tシャツ 無地 タイト ホワイト）"
+            "coordinate_review": "コーディネート全体の印象を100文字程度で記述。回答するときはコーディネートを対象にすることが重要です背景等の情報は判断に含めないようにしてください。",
+            "tops_categorize": "<トップスのアイテム名> <柄(ないなら空白)> <カラー>（例：パンツ ストライプ ブラック）",
+            "bottoms_categorize": "<ボトムスのアイテム名> <柄(ないなら空白)> <カラー>（例：Tシャツ ホワイト）"
         }
-
-	## サイズ感
-	- ワイド
-	- タイト
 
         ## 注意事項
         - 必ずJSON形式で回答してください
