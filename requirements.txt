@@ -3,3 +3,4 @@ openai
 uvicorn
 requests
 pydantic
+aiohttp

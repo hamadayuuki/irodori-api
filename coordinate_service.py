@@ -1,5 +1,6 @@
 import csv
 import random
+import asyncio
 from typing import List, Dict
 from collections import defaultdict
 from models import CoordinateItem, Gender, AffiliateProduct
@@ -122,4 +123,56 @@ class CoordinateService:
                 bottoms_query = yahoo_client.extract_search_keywords(coord.bottoms_categorize)
                 bottoms_products = yahoo_client.search_products(bottoms_query, gender_jp, 15)
                 coord.affiliate_bottoms = [AffiliateProduct(**product) for product in bottoms_products]
+        return result
+    
+    @staticmethod
+    async def recommend_coordinates_async(gender: Gender) -> Dict:
+        # 1. genderに基づいてCSVファイルを読み込み
+        coordinates = CoordinateService.get_coordinates_by_gender(gender)
+        
+        # 2. ファイルパスを決定
+        file_paths = []
+        if gender == Gender.other:
+            file_paths = ["data/analysis-coordinate/men/coordinates.csv", "data/analysis-coordinate/women/coordinates.csv"]
+        else:
+            file_paths = [f"data/analysis-coordinate/{gender.value}/coordinates.csv"]
+        
+        # 3. genreでグループ化してランダム選択
+        result = CoordinateService.group_by_genre_and_select_random(coordinates, file_paths)
+        
+        # 4. Yahoo商品検索を並行処理で追加
+        yahoo_client = YahooShoppingClient()
+        gender_jp = "メンズ" if gender.value == "men" else "レディース" if gender.value == "women" else "メンズ"
+        
+        # 並行処理用のタスクを作成
+        tasks = []
+        task_info = []  # タスクがどのコーディネートのどのカテゴリに対応しているかを追跡
+        
+        for coord in result['coordinates']:
+            # トップス商品検索
+            if coord.tops_categorize:
+                tops_query = yahoo_client.extract_search_keywords(coord.tops_categorize)
+                task = yahoo_client.search_products_async(tops_query, gender_jp, 15)
+                tasks.append(task)
+                task_info.append((coord, 'tops'))
+            
+            # ボトムス商品検索
+            if coord.bottoms_categorize:
+                bottoms_query = yahoo_client.extract_search_keywords(coord.bottoms_categorize)
+                task = yahoo_client.search_products_async(bottoms_query, gender_jp, 15)
+                tasks.append(task)
+                task_info.append((coord, 'bottoms'))
+        
+        # すべてのAPIコールを並行実行
+        if tasks:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # 結果を各コーディネートに割り当て
+            for i, (coord, category) in enumerate(task_info):
+                if not isinstance(results[i], Exception) and results[i]:
+                    if category == 'tops':
+                        coord.affiliate_tops = [AffiliateProduct(**product) for product in results[i]]
+                    else:
+                        coord.affiliate_bottoms = [AffiliateProduct(**product) for product in results[i]]
+        
         return result

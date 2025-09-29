@@ -322,7 +322,7 @@ async def analysisCoordinate(request: AnalysisCoordinateRequest):
 
 @app.post("/recommend-coordinates", response_model=RecommendCoordinatesResponse)
 async def recommend_coordinates(request: RecommendCoordinatesRequest):
-    result = CoordinateService.recommend_coordinates(request.gender)
+    result = await CoordinateService.recommend_coordinates_async(request.gender)
     genres_with_count = [GenreCount(genre=genre, count=count) for genre, count in result['genres'].items()]
     return RecommendCoordinatesResponse(
         coordinates=result['coordinates'],
