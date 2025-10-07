@@ -326,7 +326,8 @@ async def recommend_coordinates(request: RecommendCoordinatesRequest):
     genres_with_count = [GenreCount(genre=genre, count=count) for genre, count in result['genres'].items()]
     return RecommendCoordinatesResponse(
         coordinates=result['coordinates'],
-        genres=genres_with_count
+        genres=genres_with_count,
+        recommend_reasons=result.get('recommend_reasons')
     )
 
 @app.get("/health/recommend-coordinates")

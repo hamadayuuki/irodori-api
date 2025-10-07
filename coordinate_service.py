@@ -123,6 +123,12 @@ class CoordinateService:
                 bottoms_query = yahoo_client.extract_search_keywords(coord.bottoms_categorize)
                 bottoms_products = yahoo_client.search_products(bottoms_query, gender_jp, 15)
                 coord.affiliate_bottoms = [AffiliateProduct(**product) for product in bottoms_products]
+
+        # Gemini APIを使ってrecommend_reasonsを生成
+        gemini_service = GeminiService()
+        recommend_reasons = gemini_service.generate_recommend_reasons(result['coordinates'])
+        result['recommend_reasons'] = recommend_reasons
+
         return result
     
     @staticmethod
@@ -174,5 +180,10 @@ class CoordinateService:
                         coord.affiliate_tops = [AffiliateProduct(**product) for product in results[i]]
                     else:
                         coord.affiliate_bottoms = [AffiliateProduct(**product) for product in results[i]]
-        
+
+        # Gemini APIを使ってrecommend_reasonsを生成
+        gemini_service = GeminiService()
+        recommend_reasons = await gemini_service.generate_recommend_reasons_async(result['coordinates'])
+        result['recommend_reasons'] = recommend_reasons
+
         return result

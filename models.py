@@ -49,3 +49,4 @@ class AnalysisCoordinateResponse(BaseModel):
 class RecommendCoordinatesResponse(BaseModel):
     coordinates: List[CoordinateItem]
     genres: List[GenreCount]
+    recommend_reasons: Optional[str] = None
