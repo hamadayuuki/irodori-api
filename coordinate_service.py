@@ -5,6 +5,7 @@ from typing import List, Dict
 from collections import defaultdict
 from models import CoordinateItem, Gender, AffiliateProduct
 from yahoo_shopping import YahooShoppingClient
+from gemini_service import GeminiService
 
 
 class CoordinateService:
