@@ -168,12 +168,18 @@ class GeminiService:
             # Prepare image data
             image_data = base64.b64decode(image_base64)
             
+            # Create content with text and image
+            content = [
+                {"text": prompt},
+                {"inline_data": {
+                    "mime_type": "image/jpeg",
+                    "data": image_base64
+                }}
+            ]
+            
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash-lite",
-                contents=[
-                    types.Part.from_text(prompt),
-                    types.Part.from_bytes(data=image_data, mime_type="image/jpeg")
-                ],
+                contents=content,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
