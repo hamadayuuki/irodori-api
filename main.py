@@ -339,7 +339,11 @@ async def recommend_coordinates(request: RecommendCoordinatesRequest):
 @app.post("/chat", response_model=ChatResponse)
 async def chat_coordinate(request: ChatRequest):
     gemini_service = GeminiService()
-    answer = await gemini_service.chat_coordinate_advice_async(request.question, request.gender)
+    answer = await gemini_service.chat_coordinate_advice_async(
+        request.question, 
+        request.gender, 
+        request.image_base64
+    )
     return ChatResponse(answer=answer)
 
 @app.get("/health/recommend-coordinates")

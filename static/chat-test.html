@@ -90,6 +90,67 @@
             border-color: #667eea;
         }
         
+        .image-upload-area {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 2px dashed #e5e5e7;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .image-upload-area:hover {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+        
+        .image-upload-area.drag-over {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+        
+        .image-upload-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .image-upload-text {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .uploaded-image {
+            display: none;
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            display: none;
+        }
+        
         .chat-messages {
             min-height: 400px;
             max-height: 500px;
@@ -131,6 +192,7 @@
             padding: 12px 20px;
             border-radius: 20px;
             word-wrap: break-word;
+            white-space: pre-wrap;
         }
         
         .message.user .message-content {
@@ -142,6 +204,14 @@
             background: white;
             border: 1px solid #e5e5e7;
             color: #1d1d1f;
+        }
+        
+        .message-image {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: block;
         }
         
         .input-container {
@@ -262,13 +332,17 @@
             color: #c33;
             margin-top: 10px;
         }
+        
+        #imageInput {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🎨 Irodori Chat</h1>
-            <p class="subtitle">ファッションコーディネートアドバイザー</p>
+            <p class="subtitle">ファッションコーディネートアドバイザー（画像対応）</p>
         </header>
         
         <div class="chat-container">
@@ -281,10 +355,24 @@
                 </div>
             </div>
             
+            <div class="image-upload-area" onclick="document.getElementById('imageInput').click()">
+                <button type="button" class="image-upload-button">
+                    📷 画像をアップロード
+                </button>
+                <div class="image-upload-text">
+                    コーディネート画像をアップロードして、より具体的なアドバイスを受けよう！<br>
+                    (JPG, PNG, GIF対応 / ドラッグ&ドロップも可能)
+                </div>
+                <img class="uploaded-image" id="uploadedImage" />
+                <button class="remove-image" onclick="removeImage(event)">×</button>
+                <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(this)" />
+            </div>
+            
             <div class="chat-messages" id="chatMessages">
                 <div class="message assistant">
                     <div class="message-content">
-                        こんにちは！ファッションコーディネートについて何でもお聞きください。
+                        こんにちは！ファッションコーディネートについて何でもお聞きください。<br><br>
+                        📷 **画像をアップロード**すると、あなたの実際のコーディネートを見ながら、より具体的で実用的なアドバイスを提供できます。<br><br>
                         季節やシーン、アイテムの組み合わせなど、お気軽にご相談ください。
                     </div>
                 </div>
@@ -307,7 +395,7 @@
             <div class="error-message" id="errorMessage"></div>
             
             <div class="example-questions">
-                <h3>💡 質問例：</h3>
+                <h3>💡 質問例（画像なし）：</h3>
                 <button class="example-button" onclick="setExample('デートに着ていく春のコーデを教えて')">
                     デート春コーデ
                 </button>
@@ -317,11 +405,19 @@
                 <button class="example-button" onclick="setExample('黒スキニーに合うトップスは？')">
                     黒スキニー合わせ
                 </button>
-                <button class="example-button" onclick="setExample('結婚式の二次会に着ていく服装は？')">
-                    結婚式二次会
+                
+                <h3 style="margin-top: 20px;">📷 質問例（画像あり）：</h3>
+                <button class="example-button" onclick="setExample('このコーディネートどう思いますか？')">
+                    コーデ評価
                 </button>
-                <button class="example-button" onclick="setExample('梅雨時期のおすすめコーデは？')">
-                    梅雨コーデ
+                <button class="example-button" onclick="setExample('この服装に合うアクセサリーは？')">
+                    アクセサリー提案
+                </button>
+                <button class="example-button" onclick="setExample('もっとおしゃれに見える着こなし方は？')">
+                    着こなし改善
+                </button>
+                <button class="example-button" onclick="setExample('このコーデはどんなシーンに合いますか？')">
+                    シーン判定
                 </button>
             </div>
         </div>
@@ -329,6 +425,7 @@
     
     <script>
         let selectedGender = 'men';
+        let currentImage = null;
         
         // Gender selection
         document.querySelectorAll('.gender-button').forEach(button => {
@@ -339,19 +436,98 @@
             });
         });
         
+        // Drag and drop for image upload
+        const uploadArea = document.querySelector('.image-upload-area');
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                const file = files[0];
+                displayImage(file);
+            }
+        });
+        
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (file && file.type.startsWith('image/')) {
+                displayImage(file);
+            }
+        }
+        
+        function displayImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = e.target.result.split(',')[1]; // Remove data:image/...;base64, prefix
+                const img = document.getElementById('uploadedImage');
+                const removeBtn = document.querySelector('.remove-image');
+                
+                img.src = e.target.result;
+                img.style.display = 'block';
+                removeBtn.style.display = 'block';
+                
+                // Update upload area text
+                document.querySelector('.image-upload-text').innerHTML = 
+                    '画像がアップロードされました！<br>別の画像に変更するにはここをクリック';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeImage(event) {
+            event.stopPropagation();
+            currentImage = null;
+            
+            const img = document.getElementById('uploadedImage');
+            const removeBtn = document.querySelector('.remove-image');
+            const input = document.getElementById('imageInput');
+            
+            img.style.display = 'none';
+            img.src = '';
+            removeBtn.style.display = 'none';
+            input.value = '';
+            
+            // Reset upload area text
+            document.querySelector('.image-upload-text').innerHTML = 
+                'コーディネート画像をアップロードして、より具体的なアドバイスを受けよう！<br>(JPG, PNG, GIF対応 / ドラッグ&ドロップも可能)';
+        }
+        
         function setExample(text) {
             document.getElementById('messageInput').value = text;
             document.getElementById('messageInput').focus();
         }
         
-        function addMessage(content, isUser) {
+        function addMessage(content, isUser, hasImage = false) {
             const messagesContainer = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.textContent = content;
+            
+            if (hasImage && isUser) {
+                const img = document.createElement('img');
+                img.className = 'message-image';
+                img.src = document.getElementById('uploadedImage').src;
+                contentDiv.appendChild(img);
+                
+                const textDiv = document.createElement('div');
+                textDiv.textContent = content;
+                contentDiv.appendChild(textDiv);
+            } else {
+                contentDiv.textContent = content;
+            }
             
             messageDiv.appendChild(contentDiv);
             messagesContainer.appendChild(messageDiv);
@@ -370,7 +546,7 @@
             if (!message) return;
             
             // Add user message
-            addMessage(message, true);
+            addMessage(message, true, currentImage !== null);
             
             // Clear input and disable button
             input.value = '';
@@ -379,15 +555,21 @@
             errorMessage.style.display = 'none';
             
             try {
+                const requestBody = {
+                    question: message,
+                    gender: selectedGender
+                };
+                
+                if (currentImage) {
+                    requestBody.image_base64 = currentImage;
+                }
+                
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        question: message,
-                        gender: selectedGender
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 if (!response.ok) {

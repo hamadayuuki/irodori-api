@@ -1,6 +1,7 @@
 import json
 import asyncio
 import os
+import base64
 from typing import List, Optional
 from google import genai
 from google.genai import types
@@ -126,9 +127,73 @@ class GeminiService:
             print(f"Error in chat_coordinate_advice: {e}")
             return "申し訳ございません。エラーが発生しました。もう一度お試しください。"
     
-    async def chat_coordinate_advice_async(self, question: str, gender: str) -> str:
+    def chat_coordinate_advice_with_image(self, question: str, gender: str, image_base64: str) -> str:
         """
-        Async version of chat_coordinate_advice.
+        Generate coordinate advice based on user's question and image using Gemini API.
+        
+        Args:
+            question: User's question about fashion/coordination
+            gender: Gender of the user (men/women/other)
+            image_base64: Base64 encoded image data
+            
+        Returns:
+            str: Fashion advice response
+        """
+        gender_str = "メンズ" if gender == "men" else "レディース" if gender == "women" else "ユニセックス"
+        
+        prompt = f"""
+        あなたはプロのファッションコーディネーターです。
+        投稿された画像を見て、以下の質問に対して{gender_str}ファッションの観点から具体的で実用的なアドバイスを提供してください。
+        
+        質問: {question}
+        
+        回答ガイドライン:
+        - 画像のコーディネートを分析し、質問に具体的に答える
+        - 画像のアイテムや色、スタイルを評価し、改善提案をする
+        - 具体的なアイテムやブランドの例を挙げる
+        - 季節感やトレンドを考慮する
+        - シーン別の着こなし方を提案する
+        - 初心者にも分かりやすい言葉で説明する
+        - 200-400文字程度で簡潔にまとめる
+        - 可読性を高めるために、改行コード（\n）を適宜使用する
+        - 強調する箇所は **太字** にする
+        - 基本的には箇条書きを使用する
+        - 飽きさせない面白い言い回しで回答する
+        
+        # アウトプット
+        {{"answer": "<アドバイス内容>"}}
+        """
+        
+        try:
+            # Prepare image data
+            image_data = base64.b64decode(image_base64)
+            
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                contents=[
+                    types.Part.from_text(prompt),
+                    types.Part.from_bytes(data=image_data, mime_type="image/jpeg")
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
+                    temperature=0.7,
+                    max_output_tokens=6000
+                ),
+            )
+            
+            result = json.loads(response.text)
+            return result.get("answer", "申し訳ございません。回答を生成できませんでした。")
+        except Exception as e:
+            print(f"Error in chat_coordinate_advice_with_image: {e}")
+            return "申し訳ございません。エラーが発生しました。もう一度お試しください。"
+    
+    async def chat_coordinate_advice_async(self, question: str, gender: str, image_base64: Optional[str] = None) -> str:
+        """
+        Async version of chat_coordinate_advice with optional image support.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.chat_coordinate_advice, question, gender)
+        if image_base64:
+            return await loop.run_in_executor(None, self.chat_coordinate_advice_with_image, question, gender, image_base64)
+        else:
+            return await loop.run_in_executor(None, self.chat_coordinate_advice, question, gender)
