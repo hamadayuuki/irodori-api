@@ -50,3 +50,12 @@ class RecommendCoordinatesResponse(BaseModel):
     coordinates: List[CoordinateItem]
     genres: List[GenreCount]
     recommend_reasons: Optional[str] = None
+
+
+class ChatRequest(BaseModel):
+    question: str
+    gender: Gender
+
+
+class ChatResponse(BaseModel):
+    answer: str

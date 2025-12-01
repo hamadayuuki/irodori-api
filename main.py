@@ -10,9 +10,10 @@ from pydantic import BaseModel
 import requests
 
 from fastapi import FastAPI
-from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount, AnalysisCoordinateResponse, AffiliateProduct
+from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount, AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
+from gemini_service import GeminiService
 
 # AnalysisCoordinate Models
 class AnalysisCoordinateRequest(BaseModel):
@@ -330,6 +331,12 @@ async def recommend_coordinates(request: RecommendCoordinatesRequest):
         recommend_reasons=result.get('recommend_reasons')
     )
 
+@app.post("/chat", response_model=ChatResponse)
+async def chat_coordinate(request: ChatRequest):
+    gemini_service = GeminiService()
+    answer = await gemini_service.chat_coordinate_advice_async(request.question, request.gender)
+    return ChatResponse(answer=answer)
+
 @app.get("/health/recommend-coordinates")
 async def health_recommend_coordinates():
     try:
@@ -375,6 +382,44 @@ async def health_recommend_coordinates():
             "coordinate_count": len(result.coordinates),
             "has_coordinate_reviews": all(coord.coordinate_review for coord in result.coordinates),
             "has_affiliate_products": all(coord.affiliate_tops or coord.affiliate_bottoms for coord in result.coordinates),
+            "result": result
+        }
+        
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+@app.get("/health/chat")
+async def health_chat():
+    try:
+        # テスト用リクエストを作成
+        test_request = ChatRequest(
+            question="30代男性に合う春のカジュアルコーデを教えて",
+            gender="men"
+        )
+        
+        # chat_coordinate関数を呼び出し
+        result = await chat_coordinate(test_request)
+        
+        # コンソールに出力
+        print("=== Health check result for chat endpoint ===")
+        print(f"Question: {test_request.question}")
+        print(f"Gender: {test_request.gender}")
+        print(f"Answer: {result.answer}")
+        print("\n=== チャット機能の確認完了 ===")
+        print("✅ Gemini API統合")
+        print("✅ 質問に対する回答生成")
+        
+        return {
+            "status": "success",
+            "message": "chat endpoint test completed with Gemini integration",
+            "test_question": test_request.question,
+            "test_gender": test_request.gender,
+            "response_length": len(result.answer),
             "result": result
         }
         

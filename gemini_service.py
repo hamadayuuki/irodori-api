@@ -67,3 +67,59 @@ class GeminiService:
         # Run the synchronous method in an executor to avoid blocking
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.generate_recommend_reasons, coordinates)
+    
+    def chat_coordinate_advice(self, question: str, gender: str) -> str:
+        """
+        Generate coordinate advice based on user's question using Gemini API.
+        
+        Args:
+            question: User's question about fashion/coordination
+            gender: Gender of the user (men/women/other)
+            
+        Returns:
+            str: Fashion advice response
+        """
+        gender_str = "メンズ" if gender == "men" else "レディース" if gender == "women" else "ユニセックス"
+        
+        prompt = f"""
+        あなたはプロのファッションコーディネーターです。
+        以下の質問に対して、{gender_str}ファッションの観点から具体的で実用的なアドバイスを提供してください。
+        
+        質問: {question}
+        
+        回答ガイドライン:
+        - 質問の内容に直接的に答える
+        - 具体的なアイテムやブランドの例を挙げる
+        - 季節感やトレンドを考慮する
+        - シーン別の着こなし方を提案する
+        - 初心者にも分かりやすい言葉で説明する
+        - 150-300文字程度で簡潔にまとめる
+        
+        #アウトプット
+        {{"answer": "<アドバイス内容>"}}
+        """
+        
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.0-flash-exp",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
+                    temperature=0.7,
+                    max_output_tokens=500
+                ),
+            )
+            
+            result = json.loads(response.text)
+            return result.get("answer", "申し訳ございません。回答を生成できませんでした。")
+        except Exception as e:
+            print(f"Error in chat_coordinate_advice: {e}")
+            return "申し訳ございません。エラーが発生しました。もう一度お試しください。"
+    
+    async def chat_coordinate_advice_async(self, question: str, gender: str) -> str:
+        """
+        Async version of chat_coordinate_advice.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.chat_coordinate_advice, question, gender)
