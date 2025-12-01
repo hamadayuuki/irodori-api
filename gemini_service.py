@@ -44,7 +44,7 @@ class GeminiService:
         
         try:
             response = self.client.models.generate_content(
-                model="gemini-2.0-flash-lite",  # Using newer model
+                model="gemini-2.5-flash-lite",  # Using newer model
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -110,7 +110,7 @@ class GeminiService:
         
         try:
             response = self.client.models.generate_content(
-                model="gemini-2.0-flash-exp",
+                model="gemini-2.5-flash-lite",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
