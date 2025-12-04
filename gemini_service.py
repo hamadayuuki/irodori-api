@@ -143,15 +143,13 @@ class GeminiService:
         
         prompt = f"""
         あなたはプロのファッションコーディネーターです。
-        投稿された画像を見て、以下の質問に対して{gender_str}ファッションの観点から具体的で実用的なアドバイスを提供してください。
+        投稿された画像を見て、以下の質問に対して{gender_str}回答してください。必要最低限の文字数で、回答ガイドラインおよびアウトプットに従って出力してください。
         
         質問: {question}
         
         回答ガイドライン:
         - 具体的なアイテムやブランドの例を挙げる
         - 今日から実践できるアドバイスを提供すると良い
-        - 季節感やトレンドを考慮する
-        - シーン別の着こなし方を提案する
         - 初心者にも分かりやすい言葉で説明する
         - 可読性を高めるために、改行コード（\n）を適宜使用する
         - 強調する箇所は **太字** にする
@@ -159,7 +157,7 @@ class GeminiService:
         - 飽きさせない面白い言い回しで回答する
         
         # アウトプット
-        {{"answer": "<質問への回答, 300文字以内>"}}
+        {{"answer": "<**必ず300文字以内で**質問への回答>"}}
         """
         
         try:
@@ -176,7 +174,7 @@ class GeminiService:
             ]
             
             response = self.client.models.generate_content(
-                model="gemini-3-pro-preview",
+                model="gemini-2.5-flash-lite",
                 contents=content,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
