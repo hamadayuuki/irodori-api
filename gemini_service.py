@@ -148,9 +148,8 @@ class GeminiService:
         質問: {question}
         
         回答ガイドライン:
-        - 画像のコーディネートを分析し、質問に具体的に答える
-        - 画像のアイテムや色、スタイルを評価し、改善提案をする
         - 具体的なアイテムやブランドの例を挙げる
+        - 今日から実践できるアドバイスを提供すると良い
         - 季節感やトレンドを考慮する
         - シーン別の着こなし方を提案する
         - 初心者にも分かりやすい言葉で説明する
@@ -177,7 +176,7 @@ class GeminiService:
             ]
             
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash-lite",
+                model="gemini-3-pro-preview",
                 contents=content,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
