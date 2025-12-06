@@ -342,7 +342,8 @@ async def chat_coordinate(request: ChatRequest):
     answer = await gemini_service.chat_coordinate_advice_async(
         request.question, 
         request.gender, 
-        request.image_base64
+        request.image_base64,
+        request.model
     )
     return ChatResponse(answer=answer)
 

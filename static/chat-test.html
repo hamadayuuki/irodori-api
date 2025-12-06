@@ -90,6 +90,29 @@
             border-color: #667eea;
         }
         
+        .model-button {
+            flex: 1;
+            padding: 12px 24px;
+            border: 2px solid #e5e5e7;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .model-button:hover {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+        
+        .model-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
         .image-upload-area {
             margin-bottom: 20px;
             padding: 20px;
@@ -355,6 +378,15 @@
                 </div>
             </div>
             
+            <div class="gender-selector" style="margin-top: 20px;">
+                <label>Geminiモデルを選択してください：</label>
+                <div class="gender-buttons">
+                    <button class="model-button active" data-model="gemini-2.5-flash">gemini-2.5-flash</button>
+                    <button class="model-button" data-model="gemini-2.5-flash-lite">gemini-2.5-flash-lite</button>
+                    <button class="model-button" data-model="gemini-3-pro-preview">gemini-3-pro-preview</button>
+                </div>
+            </div>
+            
             <div class="image-upload-area" onclick="document.getElementById('imageInput').click()">
                 <button type="button" class="image-upload-button">
                     📷 画像をアップロード
@@ -425,6 +457,7 @@
     
     <script>
         let selectedGender = 'men';
+        let selectedModel = 'gemini-2.5-flash';
         let currentImage = null;
         
         // Gender selection
@@ -433,6 +466,15 @@
                 document.querySelectorAll('.gender-button').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 selectedGender = this.dataset.gender;
+            });
+        });
+        
+        // Model selection
+        document.querySelectorAll('.model-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.model-button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedModel = this.dataset.model;
             });
         });
         
@@ -557,7 +599,8 @@
             try {
                 const requestBody = {
                     question: message,
-                    gender: selectedGender
+                    gender: selectedGender,
+                    model: selectedModel
                 };
                 
                 if (currentImage) {

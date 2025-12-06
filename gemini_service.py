@@ -69,7 +69,7 @@ class GeminiService:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.generate_recommend_reasons, coordinates)
     
-    def chat_coordinate_advice(self, question: str, gender: str) -> str:
+    def chat_coordinate_advice(self, question: str, gender: str, model: Optional[str] = None) -> str:
         """
         Generate coordinate advice based on user's question using Gemini API.
         
@@ -110,8 +110,10 @@ class GeminiService:
         """
         
         try:
+            # Use provided model or default to gemini-2.5-flash
+            model_name = model if model else "gemini-2.5-flash"
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash-lite",
+                model=model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -127,7 +129,7 @@ class GeminiService:
             print(f"Error in chat_coordinate_advice: {e}")
             return "申し訳ございません。エラーが発生しました。もう一度お試しください。"
     
-    def chat_coordinate_advice_with_image(self, question: str, gender: str, image_base64: str) -> str:
+    def chat_coordinate_advice_with_image(self, question: str, gender: str, image_base64: str, model: Optional[str] = None) -> str:
         """
         Generate coordinate advice based on user's question and image using Gemini API.
         
@@ -147,11 +149,11 @@ class GeminiService:
         
         質問: {question}
         
-        回答ガイドライン:
+        回答ガイドライン（**必ず守ること**）
         - 初心者にも分かりやすい優しい口調で話す
         - **可読性を高めるために、改行 \n を適宜使用する**
         - **箇条書きする場合、2番目以降の行頭には2段の改行 \n\n を入れる**
-        - 改行の文字は \n と表記すること。それ以外は改行の文字として認めない
+        - **改行の文字は \n と表記すること。**<br>などの改行の文字として認めない
         - 強調する箇所は **太字** にする
         - 基本的には箇条書きを使用する
         
@@ -175,8 +177,10 @@ class GeminiService:
                 }}
             ]
             
+            # Use provided model or default to gemini-2.5-flash
+            model_name = model if model else "gemini-2.5-flash"
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=model_name,
                 contents=content,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -192,12 +196,12 @@ class GeminiService:
             print(f"Error in chat_coordinate_advice_with_image: {e}")
             return "申し訳ございません。エラーが発生しました。もう一度お試しください。"
     
-    async def chat_coordinate_advice_async(self, question: str, gender: str, image_base64: Optional[str] = None) -> str:
+    async def chat_coordinate_advice_async(self, question: str, gender: str, image_base64: Optional[str] = None, model: Optional[str] = None) -> str:
         """
         Async version of chat_coordinate_advice with optional image support.
         """
         loop = asyncio.get_event_loop()
         if image_base64:
-            return await loop.run_in_executor(None, self.chat_coordinate_advice_with_image, question, gender, image_base64)
+            return await loop.run_in_executor(None, self.chat_coordinate_advice_with_image, question, gender, image_base64, model)
         else:
-            return await loop.run_in_executor(None, self.chat_coordinate_advice, question, gender)
+            return await loop.run_in_executor(None, self.chat_coordinate_advice, question, gender, model)

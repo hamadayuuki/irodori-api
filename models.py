@@ -56,6 +56,7 @@ class ChatRequest(BaseModel):
     question: str
     gender: Gender
     image_base64: Optional[str] = None
+    model: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
