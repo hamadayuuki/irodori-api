@@ -254,16 +254,20 @@ class GeminiService:
                         }
                     },
                     temperature=0.8,
-                    max_output_tokens=2000
+                    max_output_tokens=10000
                 ),
             )
 
-            result = json.loads(response.text)
-            return {
-                "ai_catchphrase": result.get("ai_catchphrase", "素敵なコーディネートです！"),
-                "ai_review_comment": result.get("ai_review_comment", "バランスの取れた素敵なコーディネートだと思います。"),
-                "tags": result.get("tags", ["カジュアル"])
-            }
+            # テキストをJSONとして読み込む (確実な方法)
+            try:
+                return json.loads(response.text)
+            except json.JSONDecodeError:
+                # 万が一JSON化に失敗した場合のフェイルセーフ
+                return {
+                    "ai_catchphrase": "生成エラー", 
+                    "ai_review_comment": "解析できませんでした", 
+                    "tags": []
+                }
         except Exception as e:
             print(f"Error in generate_fashion_review: {e}")
             return {
