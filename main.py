@@ -500,6 +500,78 @@ async def healthAnalysisCoordinate():
         }
 
 
+@app.get("/health/fashion-review")
+async def health_fashion_review():
+    """
+    Health check endpoint for fashion review functionality.
+    Uses test image to verify the entire flow:
+    1. Image upload simulation
+    2. Gemini AI review generation
+    3. Firebase Storage upload (skipped in health check)
+    4. Response formatting
+    """
+    # テスト用画像を読み込み
+    image_path = "test/image/coordinate.jpg"
+
+    try:
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+
+        # Initialize services
+        gemini_service = GeminiService()
+
+        # Generate AI review using Gemini (Firebaseは使わない)
+        print(f"[Health Check] Generating fashion review for test image")
+        ai_review = await gemini_service.generate_fashion_review_async(image_base64)
+
+        # Build mock response (Firebase操作はスキップ)
+        test_coordinate_id = "test-coordinate-id"
+        current_date = "2026-01-12T12:00:00.000000"
+
+        print(f"[Health Check] Fashion review completed")
+        print(f"  - AI Catchphrase: {ai_review['ai_catchphrase']}")
+        print(f"  - AI Review: {ai_review['ai_review_comment'][:50]}...")
+        print(f"  - Tags: {', '.join(ai_review['tags'])}")
+
+        return {
+            "status": "success",
+            "message": "fashion-review endpoint test completed",
+            "test_image": image_path,
+            "ai_catchphrase": ai_review["ai_catchphrase"],
+            "ai_review_comment": ai_review["ai_review_comment"],
+            "tags": ai_review["tags"],
+            "mock_response": {
+                "current_coordinate": {
+                    "id": test_coordinate_id,
+                    "date": current_date,
+                    "coodinate_image_path": "https://storage.googleapis.com/test-bucket/test-image.jpg"
+                },
+                "recent_coordinates": [],
+                "items": [],
+                "ai_catchphrase": ai_review["ai_catchphrase"],
+                "ai_review_comment": ai_review["ai_review_comment"],
+                "tags": ai_review["tags"]
+            }
+        }
+
+    except FileNotFoundError:
+        return {
+            "status": "error",
+            "message": f"Test image not found: {image_path}",
+            "result": None
+        }
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+
 @app.post("/api/fashion_review", response_model=FashionReviewResponse)
 async def fashion_review(
     user_id: str = Form(...),
