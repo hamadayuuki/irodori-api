@@ -223,3 +223,6 @@ __marimo__/
 
 # shell
 *.sh
+
+# secret
+etc/secrets/

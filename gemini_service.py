@@ -206,3 +206,108 @@ class GeminiService:
             return await loop.run_in_executor(None, self.chat_coordinate_advice_with_image, question, gender, image_base64, model)
         else:
             return await loop.run_in_executor(None, self.chat_coordinate_advice, question, gender, model)
+
+    def generate_fashion_review(self, image_base64: str) -> dict:
+        """
+        Generate comprehensive fashion review based on full-body image using Gemini API.
+
+        Args:
+            image_base64: Base64 encoded full-body image
+
+        Returns:
+            dict: {
+                "ai_catchphrase": str (20-30 characters, catchy phrase),
+                "ai_review_comment": str (100-200 characters, detailed review),
+                "tags": list (3-5 tags describing the style)
+            }
+        """
+        prompt = """
+        あなたはプロのファッションスタイリストです。
+        投稿された全身コーディネート画像を分析し、以下の項目を生成してください。
+
+        ## 出力内容
+        1. **ai_catchphrase**: 20-30文字以内の印象的で記憶に残るキャッチコピー
+           - ポジティブで面白く、愛のある表現
+           - そのコーデの第一印象や特徴を一言で表現
+           - 例: "大人の余裕が光るモノトーンスタイル"、"春を先取る軽やかレイヤード"
+
+        2. **ai_review_comment**: 100-200文字程度の詳細なレビュー
+           - コーディネート全体の印象と特徴
+           - 配色、シルエット、バランスについてのコメント
+           - どんなシーンに向いているか
+           - 他者からどう見られるか（同性・異性視点）
+           - ワンポイントアドバイス（褒めながら改善点を提案）
+           - ネガティブな表現は避け、ポジティブで建設的に
+           - 改行 \n を適宜使用して読みやすく
+
+        3. **tags**: 3-5個のタグ（コーデのスタイルや特徴を表すキーワード）
+           - 例: ["カジュアル", "モノトーン", "ストリート", "シンプル"]
+           - 例: ["きれいめ", "オフィスカジュアル", "大人っぽい"]
+           - 例: ["リラックス", "ナチュラル", "春コーデ"]
+
+        ## 制約事項
+        - 必ず日本語で出力
+        - ポジティブで面白く、愛のある表現を心がける
+        - ファッション初心者にも分かりやすい言葉で
+        - 不快な表現や過度にネガティブな指摘は避ける
+        - 性別や体型に関する配慮を忘れない
+
+        ## 出力フォーマット
+        {"ai_catchphrase": "<キャッチコピー>", "ai_review_comment": "<詳細レビュー>", "tags": ["<タグ1>", "<タグ2>", "<タグ3>"]}
+        """
+
+        try:
+            # Prepare image data
+            image_data = base64.b64decode(image_base64)
+
+            # Create content with text and image
+            content = [
+                {"text": prompt},
+                {"inline_data": {
+                    "mime_type": "image/jpeg",
+                    "data": image_base64
+                }}
+            ]
+
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=content,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={
+                        "type": "object",
+                        "properties": {
+                            "ai_catchphrase": {"type": "string"},
+                            "ai_review_comment": {"type": "string"},
+                            "tags": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            }
+                        }
+                    },
+                    temperature=0.8,
+                    max_output_tokens=2000
+                ),
+            )
+
+            result = json.loads(response.text)
+            return {
+                "ai_catchphrase": result.get("ai_catchphrase", "素敵なコーディネートです！"),
+                "ai_review_comment": result.get("ai_review_comment", "バランスの取れた素敵なコーディネートだと思います。"),
+                "tags": result.get("tags", ["カジュアル"])
+            }
+        except Exception as e:
+            print(f"Error in generate_fashion_review: {e}")
+            return {
+                "ai_catchphrase": "素敵なコーディネートです！",
+                "ai_review_comment": "バランスの取れた素敵なコーディネートだと思います。様々なシーンで活躍しそうですね。",
+                "tags": ["カジュアル"]
+            }
+
+    async def generate_fashion_review_async(self, image_base64: str) -> dict:
+        """
+        Async version of generate_fashion_review.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.generate_fashion_review, image_base64)
+

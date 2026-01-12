@@ -5,3 +5,5 @@ requests
 pydantic
 aiohttp
 google-genai
+firebase-admin
+python-multipart

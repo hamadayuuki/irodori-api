@@ -9,13 +9,19 @@ import random
 from pydantic import BaseModel
 import requests
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from models import RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount, AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse
+from models import (
+    RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount,
+    AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse,
+    FashionReviewResponse, FashionReviewCurrentCoordinate, FashionReviewRecentCoordinate,
+    FashionReviewItem
+)
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
 from gemini_service import GeminiService
+from firebase_service import FirebaseService
 
 # AnalysisCoordinate Models
 class AnalysisCoordinateRequest(BaseModel):
@@ -459,27 +465,27 @@ async def health_chat():
 async def healthAnalysisCoordinate():
     # テスト用画像を読み込み
     image_path = "test/image/coordinate.jpg"
-    
+
     try:
         with open(image_path, "rb") as image_file:
             image_data = image_file.read()
             image_base64 = base64.b64encode(image_data).decode('utf-8')
-        
+
         # AnalysisCoordinateRequestを作成
         test_request = AnalysisCoordinateRequest(
             image_base64=image_base64,
             gender="other"
         )
-        
+
         # analysisCoordinate関数を呼び出し
         result = await analysisCoordinate(test_request)
-        
+
         return {
             "status": "success",
             "message": "analysis-coordinate endpoint test completed",
             "result": result
         }
-        
+
     except FileNotFoundError:
         return {
             "status": "error",
@@ -488,7 +494,114 @@ async def healthAnalysisCoordinate():
         }
     except Exception as e:
         return {
-            "status": "error", 
+            "status": "error",
             "message": f"Test failed: {str(e)}",
             "result": None
         }
+
+
+@app.post("/api/fashion_review", response_model=FashionReviewResponse)
+async def fashion_review(
+    user_id: str = Form(...),
+    user_token: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """
+    Fashion review endpoint that analyzes full-body coordinate images.
+
+    Args:
+        user_id: User ID
+        user_token: User authentication token
+        file: Full-body coordinate image (JPEG/PNG)
+
+    Returns:
+        FashionReviewResponse: Contains current coordinate, recent coordinates, items, AI review, and tags
+    """
+    try:
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Invalid file type. Please upload an image.")
+
+        # TODO: Validate user_token (currently simplified)
+        # In production, implement proper authentication
+        if not user_id or not user_token:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Read image data
+        image_data = await file.read()
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+
+        # Initialize services
+        gemini_service = GeminiService()
+        firebase_service = FirebaseService()
+
+        # Generate AI review using Gemini
+        print(f"Generating fashion review for user: {user_id}")
+        ai_review = await gemini_service.generate_fashion_review_async(image_base64)
+
+        # Upload image to Firebase Storage
+        print("Uploading image to Firebase Storage...")
+        coordinate_image_url = firebase_service.upload_image(image_data, folder=f"coordinates/{user_id}")
+
+        # Generate unique coordinate ID
+        import uuid
+        from datetime import datetime
+        coordinate_id = str(uuid.uuid4())
+        current_date = datetime.now().isoformat()
+
+        # Save coordinate to Firestore
+        print("Saving coordinate to Firestore...")
+        firebase_service.save_coordinate(
+            user_id=user_id,
+            coordinate_id=coordinate_id,
+            image_path=coordinate_image_url,
+            ai_catchphrase=ai_review["ai_catchphrase"],
+            ai_review_comment=ai_review["ai_review_comment"],
+            tags=ai_review["tags"]
+        )
+
+        # TODO: Extract and save items from the coordinate image
+        # For now, return empty items list
+        # In future, you might want to use Gemini to detect individual items
+        items = []
+
+        # Get user's recent coordinates
+        print("Fetching recent coordinates...")
+        recent_coords_data = firebase_service.get_user_coordinates(user_id, limit=10)
+
+        # Format recent coordinates (exclude the current one)
+        recent_coordinates = []
+        for coord_data in recent_coords_data:
+            if coord_data.get('id') != coordinate_id:
+                recent_coordinates.append(FashionReviewRecentCoordinate(
+                    id=coord_data.get('id', ''),
+                    date=coord_data.get('date', ''),
+                    coodinate_image_path=coord_data.get('coordinate_image_path', ''),
+                    ai_catchphrase=coord_data.get('ai_catchphrase', ''),
+                    ai_review_comment=coord_data.get('ai_review_comment', '')
+                ))
+
+        # Build response
+        response = FashionReviewResponse(
+            current_coordinate=FashionReviewCurrentCoordinate(
+                id=coordinate_id,
+                date=current_date,
+                coodinate_image_path=coordinate_image_url
+            ),
+            recent_coordinates=recent_coordinates,
+            items=items,
+            ai_catchphrase=ai_review["ai_catchphrase"],
+            ai_review_comment=ai_review["ai_review_comment"],
+            tags=ai_review["tags"]
+        )
+
+        print(f"Fashion review completed successfully for user: {user_id}")
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in fashion_review endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

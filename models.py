@@ -61,3 +61,34 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     answer: str
+
+
+# Fashion Review Models
+class FashionReviewCurrentCoordinate(BaseModel):
+    id: str
+    date: str
+    coodinate_image_path: str  # Note: typo in iOS model, keeping for compatibility
+
+
+class FashionReviewRecentCoordinate(BaseModel):
+    id: str
+    date: str
+    coodinate_image_path: str  # Note: typo in iOS model, keeping for compatibility
+    ai_catchphrase: str
+    ai_review_comment: str
+
+
+class FashionReviewItem(BaseModel):
+    id: str
+    coordinate_id: str
+    item_type: str
+    item_image_path: str
+
+
+class FashionReviewResponse(BaseModel):
+    current_coordinate: FashionReviewCurrentCoordinate
+    recent_coordinates: List[FashionReviewRecentCoordinate]
+    items: List[FashionReviewItem]
+    ai_catchphrase: str
+    ai_review_comment: str
+    tags: Optional[List[str]] = None
