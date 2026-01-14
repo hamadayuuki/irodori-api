@@ -92,3 +92,4 @@ class FashionReviewResponse(BaseModel):
     ai_catchphrase: str
     ai_review_comment: str
     tags: Optional[List[str]] = None
+    item_types: Optional[List[str]] = None  # List of found item types (e.g., ["アウター", "トップス", "ボトムス"])

@@ -209,7 +209,7 @@ class GeminiService:
 
     def generate_fashion_review(self, image_base64: str) -> dict:
         """
-        Generate comprehensive fashion review based on full-body image using Gemini API.
+        Generate comprehensive fashion review and extract items from full-body image using Gemini API.
 
         Args:
             image_base64: Base64 encoded full-body image
@@ -218,16 +218,185 @@ class GeminiService:
             dict: {
                 "ai_catchphrase": str (20-30 characters, catchy phrase),
                 "ai_review_comment": str (100-200 characters, detailed review),
-                "tags": list (3-5 tags describing the style)
+                "tags": list (3-5 tags describing the style),
+                "item_types": list (list of found item types, e.g., ["アウター", "トップス", "ボトムス"]),
+                "items": list (detailed item information)
             }
         """
         with open("prompt/coordinate-review.txt", "r", encoding="utf-8") as f:
-            prompt = f.read()
+            base_prompt = f.read()
+
+        # Add item extraction instructions to the prompt
+        enhanced_prompt = base_prompt + """
+
+また、画像内のファッションアイテムも抽出してください。
+
+**アイテム抽出の指示:**
+- コーディネート画像から視認できる主要なアイテムを抽出してください
+- 各アイテムについて、種類(item_type)、カテゴリ(category)、色(color)、説明(description)を出力してください
+- 'description' は色と種類からタグを生成してください（例: 黒 レザー ライダースジャケット）
+- ハッシュタグ記号（#）は含めないでください
+- 明確に識別できるアイテムのみを出力してください（最大5個程度）
+
+**item_typeの選択基準:**
+- アウター: ジャケット、コート、ブルゾンなど
+- トップス: シャツ、Tシャツ、ニット、パーカーなど
+- ボトムス: パンツ、スカート、ショーツなど
+- シューズ: スニーカー、ブーツ、革靴など
+- アクセサリー: 帽子、バッグ、時計、サングラスなど
+"""
 
         try:
             # Prepare image data
             image_data = base64.b64decode(image_base64)
 
+            # Create content with text and image
+            content = [
+                {"text": enhanced_prompt},
+                {"inline_data": {
+                    "mime_type": "image/jpeg",
+                    "data": image_base64
+                }}
+            ]
+
+            # Enhanced response schema with items
+            response_schema = {
+                "type": "object",
+                "properties": {
+                    "ai_catchphrase": {"type": "string"},
+                    "ai_review_comment": {"type": "string"},
+                    "tags": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "item_types": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of found item types (e.g., ['アウター', 'トップス', 'ボトムス'])"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "item_type": {
+                                    "type": "string",
+                                    "enum": ["アウター", "トップス", "ボトムス", "シューズ", "アクセサリー"]
+                                },
+                                "category": {"type": "string"},
+                                "color": {"type": "string"},
+                                "description": {"type": "string"}
+                            },
+                            "required": ["item_type", "category", "color", "description"]
+                        }
+                    }
+                },
+                "required": ["ai_catchphrase", "ai_review_comment", "tags", "item_types", "items"]
+            }
+
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=content,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=response_schema,
+                    temperature=0.7,
+                    max_output_tokens=10000
+                ),
+            )
+
+            # テキストをJSONとして読み込む (確実な方法)
+            try:
+                result = json.loads(response.text)
+                print(f"[Gemini] Fashion review generated with {len(result.get('items', []))} items")
+                return result
+            except json.JSONDecodeError:
+                # 万が一JSON化に失敗した場合のフェイルセーフ
+                return {
+                    "ai_catchphrase": "生成エラー",
+                    "ai_review_comment": "解析できませんでした",
+                    "tags": [],
+                    "item_types": [],
+                    "items": []
+                }
+        except Exception as e:
+            print(f"Error in generate_fashion_review: {e}")
+            return {
+                "ai_catchphrase": "素敵なコーディネートです！",
+                "ai_review_comment": "バランスの取れた素敵なコーディネートだと思います。様々なシーンで活躍しそうですね。",
+                "tags": ["カジュアル"],
+                "item_types": [],
+                "items": []
+            }
+
+    async def generate_fashion_review_async(self, image_base64: str) -> dict:
+        """
+        Async version of generate_fashion_review.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.generate_fashion_review, image_base64)
+
+    def extract_coordinate_items(self, image_base64: str) -> list:
+        """
+        Extract items from coordinate image using Gemini API.
+
+        Args:
+            image_base64: Base64 encoded full-body coordinate image
+
+        Returns:
+            list: List of items with properties:
+                - item_type: Type of item (アウター, トップス, ボトムス, シューズ, アクセサリー)
+                - category: Specific category (e.g., Tシャツ, ジーンズ, スニーカー)
+                - color: Primary color of the item
+                - description: Generated tags based on color and type
+        """
+        # Response schema definition
+        response_schema = {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "item_type": {
+                                "type": "string",
+                                "enum": ["アウター", "トップス", "ボトムス", "シューズ", "アクセサリー"]
+                            },
+                            "category": {"type": "string"},
+                            "color": {"type": "string"},
+                            "description": {
+                                "type": "string",
+                                "description": "色と種類からタグを生成してください。# は含めないでください。"
+                            }
+                        },
+                        "required": ["item_type", "category", "color", "description"]
+                    }
+                }
+            },
+            "required": ["items"]
+        }
+
+        # Prompt for item extraction
+        prompt = """
+        画像内のファッションアイテムを分類し、詳細に解析してください。
+
+        **指示:**
+        - コーディネート画像から視認できる主要なアイテムを抽出してください
+        - 各アイテムについて、種類(item_type)、カテゴリ(category)、色(color)、説明(description)を出力してください
+        - 'description' は色と種類からタグを生成してください（例: 黒 レザー ライダースジャケット）
+        - ハッシュタグ記号（#）は含めないでください
+        - 明確に識別できるアイテムのみを出力してください（最大5個程度）
+
+        **item_typeの選択基準:**
+        - アウター: ジャケット、コート、ブルゾンなど
+        - トップス: シャツ、Tシャツ、ニット、パーカーなど
+        - ボトムス: パンツ、スカート、ショーツなど
+        - シューズ: スニーカー、ブーツ、革靴など
+        - アクセサリー: 帽子、バッグ、時計、サングラスなど
+        """
+
+        try:
             # Create content with text and image
             content = [
                 {"text": prompt},
@@ -241,45 +410,30 @@ class GeminiService:
                 model="gemini-2.5-flash",
                 contents=content,
                 config=types.GenerateContentConfig(
+                    temperature=0.4,
                     response_mime_type="application/json",
-                    response_schema={
-                        "type": "object",
-                        "properties": {
-                            "ai_catchphrase": {"type": "string"},
-                            "ai_review_comment": {"type": "string"},
-                            "tags": {
-                                "type": "array",
-                                "items": {"type": "string"}
-                            }
-                        }
-                    },
-                    temperature=0.8,
-                    max_output_tokens=10000
+                    response_schema=response_schema,
+                    max_output_tokens=2000
                 ),
             )
 
-            # テキストをJSONとして読み込む (確実な方法)
-            try:
-                return json.loads(response.text)
-            except json.JSONDecodeError:
-                # 万が一JSON化に失敗した場合のフェイルセーフ
-                return {
-                    "ai_catchphrase": "生成エラー", 
-                    "ai_review_comment": "解析できませんでした", 
-                    "tags": []
-                }
-        except Exception as e:
-            print(f"Error in generate_fashion_review: {e}")
-            return {
-                "ai_catchphrase": "素敵なコーディネートです！",
-                "ai_review_comment": "バランスの取れた素敵なコーディネートだと思います。様々なシーンで活躍しそうですね。",
-                "tags": ["カジュアル"]
-            }
+            result = json.loads(response.text)
+            items = result.get("items", [])
 
-    async def generate_fashion_review_async(self, image_base64: str) -> dict:
+            print(f"[Gemini] Extracted {len(items)} items from coordinate image")
+            for item in items:
+                print(f"  - {item.get('item_type')}: {item.get('category')} ({item.get('color')})")
+
+            return items
+
+        except Exception as e:
+            print(f"Error in extract_coordinate_items: {e}")
+            return []
+
+    async def extract_coordinate_items_async(self, image_base64: str) -> list:
         """
-        Async version of generate_fashion_review.
+        Async version of extract_coordinate_items.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.generate_fashion_review, image_base64)
+        return await loop.run_in_executor(None, self.extract_coordinate_items, image_base64)
 

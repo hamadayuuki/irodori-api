@@ -239,7 +239,10 @@ class FirebaseService:
         item_id: str,
         coordinate_id: str,
         item_type: str,
-        item_image_path: str
+        item_image_path: str = "",
+        category: Optional[str] = None,
+        color: Optional[str] = None,
+        description: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Save item data to Firestore.
@@ -247,8 +250,11 @@ class FirebaseService:
         Args:
             item_id: Item ID
             coordinate_id: Related coordinate ID
-            item_type: Type of item (e.g., 'tops', 'bottoms', 'shoes')
-            item_image_path: Firebase Storage image URL
+            item_type: Type of item (e.g., 'アウター', 'トップス', 'ボトムス', 'シューズ', 'アクセサリー')
+            item_image_path: Firebase Storage image URL (optional)
+            category: Specific category (e.g., 'Tシャツ', 'ジーンズ')
+            color: Primary color of the item
+            description: Generated tags based on color and type
 
         Returns:
             dict: Saved item data
@@ -261,6 +267,14 @@ class FirebaseService:
                 'item_image_path': item_image_path,
                 'created_at': firestore.SERVER_TIMESTAMP
             }
+
+            # Add optional fields if provided
+            if category:
+                item_data['category'] = category
+            if color:
+                item_data['color'] = color
+            if description:
+                item_data['description'] = description
 
             # Save to Firestore
             doc_ref = self.db.collection('items').document(item_id)

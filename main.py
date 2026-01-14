@@ -521,8 +521,8 @@ async def health_fashion_review():
         # Initialize services
         gemini_service = GeminiService()
 
-        # Generate AI review using Gemini (Firebaseは使わない)
-        print(f"[Health Check] Generating fashion review for test image")
+        # Generate AI review and extract items using Gemini (single API call)
+        print(f"[Health Check] Generating fashion review and extracting items for test image")
         ai_review = await gemini_service.generate_fashion_review_async(image_base64)
 
         # Build mock response (Firebase操作はスキップ)
@@ -530,18 +530,40 @@ async def health_fashion_review():
         test_coordinate_id = "test-coordinate-id"
         current_date = datetime.now().strftime('%Y/%m/%d')
 
+        extracted_items = ai_review.get("items", [])
+        item_types = ai_review.get("item_types", [])
+
         print(f"[Health Check] Fashion review completed")
         print(f"  - AI Catchphrase: {ai_review['ai_catchphrase']}")
         print(f"  - AI Review: {ai_review['ai_review_comment'][:50]}...")
         print(f"  - Tags: {', '.join(ai_review['tags'])}")
+        print(f"  - Item Types: {', '.join(item_types)}")
+        print(f"  - Extracted Items: {len(extracted_items)}")
+        for item in extracted_items:
+            print(f"    * {item.get('item_type')}: {item.get('category')} ({item.get('color')})")
+
+        # Build mock items list
+        mock_items = []
+        for item in extracted_items:
+            mock_items.append({
+                "id": f"item-{len(mock_items)}",
+                "coordinate_id": test_coordinate_id,
+                "item_type": item.get('item_type', ''),
+                "item_image_path": "",
+                "category": item.get('category', ''),
+                "color": item.get('color', ''),
+                "description": item.get('description', '')
+            })
 
         return {
             "status": "success",
-            "message": "fashion-review endpoint test completed",
+            "message": "fashion-review endpoint test completed with unified API call",
             "test_image": image_path,
             "ai_catchphrase": ai_review["ai_catchphrase"],
             "ai_review_comment": ai_review["ai_review_comment"],
             "tags": ai_review["tags"],
+            "item_types": item_types,
+            "extracted_items": extracted_items,
             "mock_response": {
                 "current_coordinate": {
                     "id": test_coordinate_id,
@@ -549,10 +571,11 @@ async def health_fashion_review():
                     "coodinate_image_path": "https://storage.googleapis.com/test-bucket/test-image.jpg"
                 },
                 "recent_coordinates": [],
-                "items": [],
+                "items": mock_items,
                 "ai_catchphrase": ai_review["ai_catchphrase"],
                 "ai_review_comment": ai_review["ai_review_comment"],
-                "tags": ai_review["tags"]
+                "tags": ai_review["tags"],
+                "item_types": item_types
             }
         }
 
@@ -608,8 +631,8 @@ async def fashion_review(
         gemini_service = GeminiService()
         firebase_service = FirebaseService()
 
-        # Generate AI review using Gemini
-        print(f"Generating fashion review for user: {user_id}")
+        # Generate AI review and extract items using Gemini (single API call)
+        print(f"Generating fashion review and extracting items for user: {user_id}")
         ai_review = await gemini_service.generate_fashion_review_async(image_base64)
 
         # Upload image to Firebase Storage
@@ -633,10 +656,33 @@ async def fashion_review(
             tags=ai_review["tags"]
         )
 
-        # TODO: Extract and save items from the coordinate image
-        # For now, return empty items list
-        # In future, you might want to use Gemini to detect individual items
+        # Save items to Firestore (items are now included in ai_review)
+        print("Saving items to Firestore...")
         items = []
+        extracted_items = ai_review.get("items", [])
+        for item_data in extracted_items:
+            item_id = str(uuid.uuid4())
+
+            # Save item to Firestore
+            firebase_service.save_item(
+                item_id=item_id,
+                coordinate_id=coordinate_id,
+                item_type=item_data.get('item_type', ''),
+                item_image_path='',  # No individual item images for now
+                category=item_data.get('category'),
+                color=item_data.get('color'),
+                description=item_data.get('description')
+            )
+
+            # Add to response items list
+            items.append(FashionReviewItem(
+                id=item_id,
+                coordinate_id=coordinate_id,
+                item_type=item_data.get('item_type', ''),
+                item_image_path=''
+            ))
+
+            print(f"  Saved item: {item_data.get('item_type')} - {item_data.get('category')}")
 
         # Get user's recent coordinates
         print("Fetching recent coordinates...")
@@ -677,7 +723,8 @@ async def fashion_review(
             items=items,
             ai_catchphrase=ai_review["ai_catchphrase"],
             ai_review_comment=ai_review["ai_review_comment"],
-            tags=ai_review["tags"]
+            tags=ai_review["tags"],
+            item_types=ai_review.get("item_types", [])
         )
 
         print(f"Fashion review completed successfully for user: {user_id}")
