@@ -83,6 +83,9 @@ class FashionReviewItem(BaseModel):
     coordinate_id: str
     item_type: str
     item_image_path: str
+    category: Optional[str] = None
+    color: Optional[str] = None
+    description: Optional[str] = None
 
 
 class FashionReviewResponse(BaseModel):

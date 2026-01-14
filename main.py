@@ -679,7 +679,10 @@ async def fashion_review(
                 id=item_id,
                 coordinate_id=coordinate_id,
                 item_type=item_data.get('item_type', ''),
-                item_image_path=''
+                item_image_path='',
+                category=item_data.get('category'),
+                color=item_data.get('color'),
+                description=item_data.get('description')
             ))
 
             print(f"  Saved item: {item_data.get('item_type')} - {item_data.get('category')}")
