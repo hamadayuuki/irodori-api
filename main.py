@@ -526,8 +526,9 @@ async def health_fashion_review():
         ai_review = await gemini_service.generate_fashion_review_async(image_base64)
 
         # Build mock response (Firebase操作はスキップ)
+        from datetime import datetime
         test_coordinate_id = "test-coordinate-id"
-        current_date = "2026-01-12T12:00:00.000000"
+        current_date = datetime.now().strftime('%Y/%m/%d')
 
         print(f"[Health Check] Fashion review completed")
         print(f"  - AI Catchphrase: {ai_review['ai_catchphrase']}")
@@ -619,7 +620,7 @@ async def fashion_review(
         import uuid
         from datetime import datetime
         coordinate_id = str(uuid.uuid4())
-        current_date = datetime.now().isoformat()
+        current_date = datetime.now().strftime('%Y/%m/%d')
 
         # Save coordinate to Firestore
         print("Saving coordinate to Firestore...")
@@ -645,9 +646,21 @@ async def fashion_review(
         recent_coordinates = []
         for coord_data in recent_coords_data:
             if coord_data.get('id') != coordinate_id:
+                # Convert date from ISO format to YYYY/MM/DD
+                date_str = coord_data.get('date', '')
+                if date_str:
+                    try:
+                        # Parse ISO format and convert to YYYY/MM/DD
+                        date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                        formatted_date = date_obj.strftime('%Y/%m/%d')
+                    except (ValueError, AttributeError):
+                        formatted_date = date_str
+                else:
+                    formatted_date = ''
+
                 recent_coordinates.append(FashionReviewRecentCoordinate(
                     id=coord_data.get('id', ''),
-                    date=coord_data.get('date', ''),
+                    date=formatted_date,
                     coodinate_image_path=coord_data.get('coordinate_image_path', ''),
                     ai_catchphrase=coord_data.get('ai_catchphrase', ''),
                     ai_review_comment=coord_data.get('ai_review_comment', '')

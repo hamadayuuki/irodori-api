@@ -216,7 +216,7 @@ class FirebaseService:
             coordinate_data = {
                 'id': coordinate_id,
                 'user_id': user_id,
-                'date': datetime.now().isoformat(),
+                'date': datetime.now().strftime('%Y/%m/%d'),
                 'coordinate_image_path': image_path,
                 'ai_catchphrase': ai_catchphrase,
                 'ai_review_comment': ai_review_comment,
