@@ -645,37 +645,27 @@ async def fashion_review(
         coordinate_id = str(uuid.uuid4())
         current_date = datetime.now().strftime('%Y/%m/%d')
 
-        # Save coordinate to Firestore
-        print("Saving coordinate to Firestore...")
-        firebase_service.save_coordinate(
-            user_id=user_id,
-            coordinate_id=coordinate_id,
-            image_path=coordinate_image_url,
-            ai_catchphrase=ai_review["ai_catchphrase"],
-            ai_review_comment=ai_review["ai_review_comment"],
-            tags=ai_review["tags"]
-        )
-
-        # Save items to Firestore (items are now included in ai_review)
-        print("Saving items to Firestore...")
-        items = []
+        # Prepare items data for saving
         extracted_items = ai_review.get("items", [])
+        items_for_firestore = []
+        items_for_response = []
+
         for item_data in extracted_items:
             item_id = str(uuid.uuid4())
 
-            # Save item to Firestore
-            firebase_service.save_item(
-                item_id=item_id,
-                coordinate_id=coordinate_id,
-                item_type=item_data.get('item_type', ''),
-                item_image_path='',  # No individual item images for now
-                category=item_data.get('category'),
-                color=item_data.get('color'),
-                description=item_data.get('description')
-            )
+            # Prepare item for Firestore (embedded in coordinate document)
+            items_for_firestore.append({
+                'id': item_id,
+                'coordinate_id': coordinate_id,
+                'item_type': item_data.get('item_type', ''),
+                'item_image_path': '',
+                'category': item_data.get('category'),
+                'color': item_data.get('color'),
+                'description': item_data.get('description')
+            })
 
-            # Add to response items list
-            items.append(FashionReviewItem(
+            # Prepare item for API response
+            items_for_response.append(FashionReviewItem(
                 id=item_id,
                 coordinate_id=coordinate_id,
                 item_type=item_data.get('item_type', ''),
@@ -685,7 +675,20 @@ async def fashion_review(
                 description=item_data.get('description')
             ))
 
-            print(f"  Saved item: {item_data.get('item_type')} - {item_data.get('category')}")
+            print(f"  Prepared item: {item_data.get('item_type')} - {item_data.get('category')}")
+
+        # Save coordinate with items and item_types to Firestore
+        print("Saving coordinate with items to Firestore...")
+        firebase_service.save_coordinate(
+            user_id=user_id,
+            coordinate_id=coordinate_id,
+            image_path=coordinate_image_url,
+            ai_catchphrase=ai_review["ai_catchphrase"],
+            ai_review_comment=ai_review["ai_review_comment"],
+            tags=ai_review["tags"],
+            items=items_for_firestore,
+            item_types=ai_review.get("item_types", [])
+        )
 
         # Get user's recent coordinates
         print("Fetching recent coordinates...")
@@ -723,7 +726,7 @@ async def fashion_review(
                 coodinate_image_path=coordinate_image_url
             ),
             recent_coordinates=recent_coordinates,
-            items=items,
+            items=items_for_response,
             ai_catchphrase=ai_review["ai_catchphrase"],
             ai_review_comment=ai_review["ai_review_comment"],
             tags=ai_review["tags"],

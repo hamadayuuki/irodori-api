@@ -196,7 +196,9 @@ class FirebaseService:
         image_path: str,
         ai_catchphrase: str,
         ai_review_comment: str,
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
+        items: Optional[List[Dict[str, Any]]] = None,
+        item_types: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Save coordinate data to Firestore.
@@ -208,6 +210,8 @@ class FirebaseService:
             ai_catchphrase: AI generated catchphrase
             ai_review_comment: AI generated review comment
             tags: Optional tags list
+            items: Optional items list (embedded in coordinate document)
+            item_types: Optional list of found item types (e.g., ["アウター", "トップス", "ボトムス"])
 
         Returns:
             dict: Saved coordinate data
@@ -221,6 +225,8 @@ class FirebaseService:
                 'ai_catchphrase': ai_catchphrase,
                 'ai_review_comment': ai_review_comment,
                 'tags': tags or [],
+                'items': items or [],
+                'item_types': item_types or [],
                 'created_at': firestore.SERVER_TIMESTAMP,
                 'updated_at': firestore.SERVER_TIMESTAMP
             }
