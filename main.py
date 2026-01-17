@@ -16,12 +16,13 @@ from models import (
     RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount,
     AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse,
     FashionReviewResponse, FashionReviewCurrentCoordinate, FashionReviewRecentCoordinate,
-    FashionReviewItem
+    FashionReviewItem, CoordinateRecommendRequest
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
 from gemini_service import GeminiService
 from firebase_service import FirebaseService
+from recommend_service import RecommendService
 
 # AnalysisCoordinate Models
 class AnalysisCoordinateRequest(BaseModel):
@@ -32,6 +33,14 @@ app = FastAPI()
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Startup event to load recommendation models
+@app.on_event("startup")
+async def startup_event():
+    """Initialize recommendation models on startup"""
+    print("Initializing recommendation service...")
+    RecommendService.initialize()
+    print("Recommendation service initialized successfully")
 
 from openai import OpenAI
 client = OpenAI(
@@ -743,3 +752,129 @@ async def fashion_review(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/coordinate-recommend")
+async def coordinate_recommend(request: CoordinateRecommendRequest):
+    """
+    Coordinate recommendation endpoint using TF-IDF based recommendation model.
+
+    Args:
+        request: CoordinateRecommendRequest containing gender, input_type, category, text, num_outfits, num_candidates
+
+    Returns:
+        Dictionary containing outfit recommendations and category item lists
+    """
+    try:
+        result = RecommendService.get_recommendations(
+            gender=request.gender,
+            input_type=request.input_type,
+            category=request.category,
+            text=request.text,
+            num_outfits=request.num_outfits,
+            num_candidates=request.num_candidates
+        )
+
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in coordinate_recommend endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/health/coordinate-recommend")
+async def health_coordinate_recommend():
+    """
+    Health check endpoint for coordinate recommendation functionality.
+    Tests the recommendation engine with sample data.
+    """
+    try:
+        # Test request for women's wide pants
+        test_request = CoordinateRecommendRequest(
+            gender="women",
+            input_type="ボトムス",
+            category="ワイドパンツ",
+            text="ブラックのワイドパンツ",
+            num_outfits=5,
+            num_candidates=10
+        )
+
+        # Get recommendations
+        result = RecommendService.get_recommendations(
+            gender=test_request.gender,
+            input_type=test_request.input_type,
+            category=test_request.category,
+            text=test_request.text,
+            num_outfits=test_request.num_outfits,
+            num_candidates=test_request.num_candidates
+        )
+
+        # Check for errors
+        if "error" in result:
+            return {
+                "status": "error",
+                "message": result["error"],
+                "test_params": {
+                    "gender": test_request.gender,
+                    "input_type": test_request.input_type,
+                    "category": test_request.category,
+                    "text": test_request.text,
+                    "num_outfits": test_request.num_outfits,
+                    "num_candidates": test_request.num_candidates
+                }
+            }
+
+        # Console output
+        print("=== Health check result for coordinate-recommend ===")
+        print(f"Test parameters:")
+        print(f"  Gender: {test_request.gender}")
+        print(f"  Input type: {test_request.input_type}")
+        print(f"  Category: {test_request.category}")
+        print(f"  Text: {test_request.text}")
+        print(f"\\nResults:")
+
+        # Count outfits
+        outfit_count = sum(1 for key in result.keys() if key.startswith("提案コーデ"))
+        print(f"  Number of outfits: {outfit_count}")
+
+        # Count category lists
+        category_lists = [key for key in result.keys() if key.endswith("一覧")]
+        print(f"  Category lists: {', '.join(category_lists)}")
+
+        print("\\n=== Coordinate recommendation check completed ===")
+        print("✅ TF-IDF model loaded")
+        print("✅ Recommendations generated")
+        print("✅ Category lists generated")
+
+        return {
+            "status": "success",
+            "message": "coordinate-recommend endpoint test completed",
+            "test_params": {
+                "gender": test_request.gender,
+                "input_type": test_request.input_type,
+                "category": test_request.category,
+                "text": test_request.text,
+                "num_outfits": test_request.num_outfits,
+                "num_candidates": test_request.num_candidates
+            },
+            "outfit_count": outfit_count,
+            "category_lists": category_lists,
+            "result": result
+        }
+
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }

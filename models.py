@@ -96,3 +96,13 @@ class FashionReviewResponse(BaseModel):
     ai_review_comment: str
     tags: Optional[List[str]] = None
     item_types: Optional[List[str]] = None  # List of found item types (e.g., ["アウター", "トップス", "ボトムス"])
+
+
+# Coordinate Recommend Models
+class CoordinateRecommendRequest(BaseModel):
+    gender: Gender
+    input_type: str
+    category: str
+    text: str
+    num_outfits: int = 3
+    num_candidates: int = 5

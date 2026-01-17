@@ -7,3 +7,6 @@ aiohttp
 google-genai
 firebase-admin
 python-multipart
+scikit-learn
+joblib
+pandas
