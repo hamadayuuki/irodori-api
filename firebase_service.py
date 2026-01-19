@@ -382,3 +382,53 @@ class FirebaseService:
         except Exception as e:
             print(f"Error getting coordinate by ID: {e}")
             return None
+
+    def get_item_images(self, item_id: str) -> List[str]:
+        """
+        Get all image URLs for a specific item from Firebase Storage.
+
+        Args:
+            item_id: Item ID (e.g., "トップス_Tシャツ_ホワイト")
+
+        Returns:
+            List of public image URLs (empty list if no images found)
+        """
+        try:
+            prefix = f"items/{item_id}/"
+            blobs = self.bucket.list_blobs(prefix=prefix)
+
+            image_urls = []
+            for blob in blobs:
+                # Skip directories
+                if blob.name.endswith('/'):
+                    continue
+
+                # Make public if not already
+                blob.make_public()
+
+                image_urls.append(blob.public_url)
+
+            return image_urls
+
+        except Exception as e:
+            print(f"Error getting images for item {item_id}: {e}")
+            return []
+
+    def get_item_images_batch(self, item_ids: List[str]) -> Dict[str, List[str]]:
+        """
+        Get image URLs for multiple items in batch.
+
+        Args:
+            item_ids: List of item IDs
+
+        Returns:
+            Dictionary mapping item_id -> list of image URLs
+        """
+        result = {}
+
+        for item_id in item_ids:
+            if not item_id or item_id.strip() == "":
+                continue
+            result[item_id] = self.get_item_images(item_id)
+
+        return result

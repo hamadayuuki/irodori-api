@@ -754,6 +754,112 @@ async def fashion_review(
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+def extract_all_item_ids(recommend_result: Dict[str, Any]) -> List[str]:
+    """
+    Extract all unique item IDs from recommendation result.
+    Handles both single items and space-separated multiple items.
+
+    Args:
+        recommend_result: Result from RecommendService.get_recommendations()
+
+    Returns:
+        List of unique item IDs
+    """
+    item_ids = set()
+
+    # Extract from 提案コーデ
+    for key in recommend_result.keys():
+        if key.startswith("提案コーデ"):
+            outfit = recommend_result[key]
+            for category_key, item_value in outfit.items():
+                if category_key == "コーデ画像名":
+                    continue
+
+                # Handle space-separated items (for accessories)
+                if isinstance(item_value, str) and item_value.strip():
+                    for item_id in item_value.split():
+                        item_ids.add(item_id)
+
+    # Extract from カテゴリ一覧
+    for key in recommend_result.keys():
+        if key.endswith("一覧"):
+            item_list = recommend_result[key]
+            if isinstance(item_list, list):
+                item_ids.update(item_list)
+
+    return list(item_ids)
+
+
+def transform_response_with_images(
+    recommend_result: Dict[str, Any],
+    image_map: Dict[str, List[str]]
+) -> Dict[str, Any]:
+    """
+    Transform recommendation result to include image URLs.
+
+    Args:
+        recommend_result: Original result from RecommendService
+        image_map: Dictionary mapping item_id -> list of image URLs
+
+    Returns:
+        Transformed result with image URLs
+    """
+    transformed = {}
+
+    # Transform 提案コーデ
+    for key in recommend_result.keys():
+        if key.startswith("提案コーデ"):
+            outfit = recommend_result[key]
+            transformed_outfit = {"コーデ画像名": outfit.get("コーデ画像名", "")}
+
+            for category_key, item_value in outfit.items():
+                if category_key == "コーデ画像名":
+                    continue
+
+                # Handle space-separated items (accessories)
+                if isinstance(item_value, str) and item_value.strip():
+                    items = item_value.split()
+
+                    if len(items) == 1:
+                        # Single item
+                        item_id = items[0]
+                        transformed_outfit[category_key] = {
+                            "アイテム名": item_id,
+                            "画像URL": image_map.get(item_id, [])
+                        }
+                    else:
+                        # Multiple items (e.g., accessories)
+                        transformed_outfit[category_key] = [
+                            {
+                                "アイテム名": item_id,
+                                "画像URL": image_map.get(item_id, [])
+                            }
+                            for item_id in items
+                        ]
+                else:
+                    # Empty item
+                    transformed_outfit[category_key] = {
+                        "アイテム名": "",
+                        "画像URL": []
+                    }
+
+            transformed[key] = transformed_outfit
+
+    # Transform カテゴリ一覧
+    for key in recommend_result.keys():
+        if key.endswith("一覧"):
+            item_list = recommend_result[key]
+            transformed[key] = [
+                {
+                    "アイテム名": item_id,
+                    "画像URL": image_map.get(item_id, [])
+                }
+                for item_id in item_list
+            ]
+
+    return transformed
+
+
 @app.post("/coordinate-recommend")
 async def coordinate_recommend(request: CoordinateRecommendRequest):
     """
@@ -763,9 +869,10 @@ async def coordinate_recommend(request: CoordinateRecommendRequest):
         request: CoordinateRecommendRequest containing gender, input_type, category, text, num_outfits, num_candidates
 
     Returns:
-        Dictionary containing outfit recommendations and category item lists
+        Dictionary containing outfit recommendations with image URLs and category item lists
     """
     try:
+        # 1. Get recommendations from model
         result = RecommendService.get_recommendations(
             gender=request.gender,
             input_type=request.input_type,
@@ -778,7 +885,17 @@ async def coordinate_recommend(request: CoordinateRecommendRequest):
         if "error" in result:
             raise HTTPException(status_code=400, detail=result["error"])
 
-        return result
+        # 2. Extract all unique item IDs
+        item_ids = extract_all_item_ids(result)
+
+        # 3. Batch load images from Firebase Storage
+        firebase_service = FirebaseService()
+        image_map = firebase_service.get_item_images_batch(item_ids)
+
+        # 4. Transform response with image URLs
+        transformed_result = transform_response_with_images(result, image_map)
+
+        return transformed_result
 
     except HTTPException:
         raise
