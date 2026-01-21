@@ -103,6 +103,7 @@ import os
 import uuid
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import firebase_admin
 from firebase_admin import credentials, storage, firestore
 from io import BytesIO
@@ -112,6 +113,7 @@ class FirebaseService:
     _initialized = False
     _db = None
     _bucket = None
+    _image_cache = {}  # Cache for item image URLs
 
     def __init__(self):
         """
@@ -393,6 +395,10 @@ class FirebaseService:
         Returns:
             List of public image URLs (empty list if no images found)
         """
+        # Check cache first
+        if item_id in FirebaseService._image_cache:
+            return FirebaseService._image_cache[item_id]
+
         try:
             prefix = f"items/{item_id}/"
             blobs = self.bucket.list_blobs(prefix=prefix)
@@ -403,11 +409,23 @@ class FirebaseService:
                 if blob.name.endswith('/'):
                     continue
 
-                # Make public if not already
-                blob.make_public()
+                # Check if blob is public, if not make it public
+                # This only needs to happen once per blob
+                try:
+                    acl = blob.acl
+                    if not acl.all().has_entity('allUsers'):
+                        blob.make_public()
+                except:
+                    # If ACL check fails, try to make public anyway
+                    try:
+                        blob.make_public()
+                    except:
+                        pass  # Continue even if make_public fails
 
                 image_urls.append(blob.public_url)
 
+            # Cache the result
+            FirebaseService._image_cache[item_id] = image_urls
             return image_urls
 
         except Exception as e:
@@ -416,7 +434,7 @@ class FirebaseService:
 
     def get_item_images_batch(self, item_ids: List[str]) -> Dict[str, List[str]]:
         """
-        Get image URLs for multiple items in batch.
+        Get image URLs for multiple items in batch using parallel processing.
 
         Args:
             item_ids: List of item IDs
@@ -426,9 +444,56 @@ class FirebaseService:
         """
         result = {}
 
-        for item_id in item_ids:
-            if not item_id or item_id.strip() == "":
-                continue
-            result[item_id] = self.get_item_images(item_id)
+        # Filter out empty item IDs
+        valid_item_ids = [item_id for item_id in item_ids if item_id and item_id.strip()]
+
+        if not valid_item_ids:
+            return result
+
+        # Use ThreadPoolExecutor for parallel processing
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            # Submit all tasks
+            future_to_item_id = {
+                executor.submit(self.get_item_images, item_id): item_id
+                for item_id in valid_item_ids
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_item_id):
+                item_id = future_to_item_id[future]
+                try:
+                    result[item_id] = future.result()
+                except Exception as e:
+                    print(f"Error getting images for item {item_id} in batch: {e}")
+                    result[item_id] = []
 
         return result
+
+    @classmethod
+    def clear_image_cache(cls, item_id: Optional[str] = None):
+        """
+        Clear image URL cache.
+
+        Args:
+            item_id: If specified, clear cache for specific item only.
+                    If None, clear entire cache.
+        """
+        if item_id:
+            cls._image_cache.pop(item_id, None)
+            print(f"Cleared cache for item: {item_id}")
+        else:
+            cls._image_cache.clear()
+            print("Cleared entire image cache")
+
+    @classmethod
+    def get_cache_stats(cls) -> Dict[str, Any]:
+        """
+        Get cache statistics.
+
+        Returns:
+            Dictionary with cache size and keys
+        """
+        return {
+            "cache_size": len(cls._image_cache),
+            "cached_items": list(cls._image_cache.keys())
+        }
