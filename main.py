@@ -1028,3 +1028,77 @@ async def clear_cache(item_id: Optional[str] = None):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing cache: {str(e)}")
+
+
+@app.get("/debug/storage-structure")
+async def debug_storage_structure(prefix: str = "items/"):
+    """
+    Debug endpoint to check Firebase Storage structure.
+    
+    Args:
+        prefix: Prefix to search (default: "items/")
+    """
+    try:
+        firebase_service = FirebaseService()
+        blobs = list(firebase_service.bucket.list_blobs(prefix=prefix, max_results=50))
+        
+        blob_info = []
+        for blob in blobs:
+            blob_info.append({
+                "name": blob.name,
+                "size": blob.size,
+                "content_type": blob.content_type,
+                "public_url": blob.public_url
+            })
+        
+        return {
+            "status": "success",
+            "prefix": prefix,
+            "blob_count": len(blob_info),
+            "blobs": blob_info
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error checking storage: {str(e)}")
+
+
+@app.get("/debug/firestore-items")
+async def debug_firestore_items(folder_name: Optional[str] = None, limit: int = 10):
+    """
+    Debug endpoint to check Firestore items collection.
+    
+    Args:
+        folder_name: Optional folder_name to filter (e.g., "トップス_Tシャツ_ホワイト")
+        limit: Maximum number of documents to return (default: 10)
+    """
+    try:
+        firebase_service = FirebaseService()
+        items_ref = firebase_service.db.collection('items')
+        
+        if folder_name:
+            query = items_ref.where('folder_name', '==', folder_name).limit(limit)
+        else:
+            query = items_ref.limit(limit)
+        
+        docs = query.stream()
+        
+        items = []
+        for doc in docs:
+            data = doc.to_dict()
+            items.append({
+                "id": doc.id,
+                "folder_name": data.get('folder_name'),
+                "storage_url": data.get('storage_url')
+            })
+        
+        return {
+            "status": "success",
+            "filter": folder_name if folder_name else "none",
+            "count": len(items),
+            "items": items
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error querying Firestore: {str(e)}")
