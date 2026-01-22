@@ -167,11 +167,33 @@ def recommend(
                     if eng_key in coord_content:
                         coord_content[eng_key].append(member_id)
 
-            # JSON文字列化
+            # 各カテゴリの最初のアイテムを name と image_paths 形式に変換
             final_coord = {"coordinate_image": coord_content["coordinate_image"]}
             for t in target_output_types:
                 eng_key = TYPE_TO_ENGLISH[t]
-                final_coord[eng_key] = " ".join(coord_content[eng_key])
+                item_ids = coord_content[eng_key]
+
+                if item_ids and len(item_ids) > 0:
+                    # 最初のアイテムを使用
+                    first_item_id = item_ids[0]
+                    item_detail = items.get(first_item_id, {})
+
+                    # アイテム名を取得（item_nameフィールドまたはitem_idをフォールバック）
+                    item_name = item_detail.get("item_name", first_item_id)
+
+                    # image_paths を生成 (00.png から 09.png)
+                    image_paths = [f"items/{item_name}/{i:02d}.png" for i in range(10)]
+
+                    final_coord[eng_key] = {
+                        "name": item_name,
+                        "image_paths": image_paths
+                    }
+                else:
+                    # アイテムがない場合は空のオブジェクト
+                    final_coord[eng_key] = {
+                        "name": "",
+                        "image_paths": []
+                    }
 
             recommend_coordinates.append(final_coord)
             seen_outfit_ids.add(oid)
