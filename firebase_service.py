@@ -387,45 +387,49 @@ class FirebaseService:
 
     def get_item_images(self, item_id: str) -> List[str]:
         """
-        Get all image URLs for a specific item from Firestore.
+        Get all image URLs for a specific item from Firebase Storage.
 
         Args:
             item_id: Item ID (e.g., "トップス_Tシャツ_ホワイト")
 
         Returns:
-            List of storage URLs (empty list if no images found)
+            List of public image URLs (empty list if no images found)
         """
         # Check cache first
         if item_id in FirebaseService._image_cache:
-            print(f"[DEBUG] Cache hit for item_id: {item_id}")
             return FirebaseService._image_cache[item_id]
 
         try:
-            print(f"[DEBUG] Querying Firestore for folder_name: {item_id}")
-
-            # Query Firestore items collection where folder_name matches item_id
-            items_ref = self.db.collection('items')
-            query = items_ref.where('folder_name', '==', item_id)
-            docs = query.stream()
+            prefix = f"items/{item_id}/"
+            blobs = self.bucket.list_blobs(prefix=prefix)
 
             image_urls = []
-            for doc in docs:
-                data = doc.to_dict()
-                storage_url = data.get('storage_url')
-                if storage_url:
-                    image_urls.append(storage_url)
-                    print(f"[DEBUG] Found storage_url: {storage_url}")
+            for blob in blobs:
+                # Skip directories
+                if blob.name.endswith('/'):
+                    continue
 
-            print(f"[DEBUG] Found {len(image_urls)} images for item_id: {item_id}")
+                # Check if blob is public, if not make it public
+                # This only needs to happen once per blob
+                try:
+                    acl = blob.acl
+                    if not acl.all().has_entity('allUsers'):
+                        blob.make_public()
+                except:
+                    # If ACL check fails, try to make public anyway
+                    try:
+                        blob.make_public()
+                    except:
+                        pass  # Continue even if make_public fails
+
+                image_urls.append(blob.public_url)
 
             # Cache the result
             FirebaseService._image_cache[item_id] = image_urls
             return image_urls
 
         except Exception as e:
-            print(f"[ERROR] Error getting images for item {item_id}: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error getting images for item {item_id}: {e}")
             return []
 
     def get_item_images_batch(self, item_ids: List[str]) -> Dict[str, List[str]]:
@@ -446,9 +450,7 @@ class FirebaseService:
         if not valid_item_ids:
             return result
 
-        print(f"[DEBUG] Fetching images for {len(valid_item_ids)} items in parallel")
-
-        # Use ThreadPoolExecutor for parallel Firestore queries
+        # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=10) as executor:
             # Submit all tasks
             future_to_item_id = {
@@ -462,10 +464,9 @@ class FirebaseService:
                 try:
                     result[item_id] = future.result()
                 except Exception as e:
-                    print(f"[ERROR] Error getting images for item {item_id} in batch: {e}")
+                    print(f"Error getting images for item {item_id} in batch: {e}")
                     result[item_id] = []
 
-        print(f"[DEBUG] Batch fetch completed, got results for {len(result)} items")
         return result
 
     @classmethod
