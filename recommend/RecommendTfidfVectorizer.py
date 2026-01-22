@@ -17,6 +17,15 @@ import pandas as pd
 # ---------------------------------------------------------------------
 ALL_TYPES = ["アウター", "トップス", "ボトムス", "シューズ", "アクセサリー"]
 
+# Mapping from Japanese to English keys
+TYPE_TO_ENGLISH = {
+    "アウター": "outer",
+    "トップス": "tops",
+    "ボトムス": "bottoms",
+    "シューズ": "shoes",
+    "アクセサリー": "accessories"
+}
+
 def _nfkc(s: str) -> str: return unicodedata.normalize("NFKC", s)
 def _norm_text(x: Any) -> str:
     if x is None: return ""
@@ -121,75 +130,76 @@ def recommend(
     item_to_outfits = model.get("item_to_outfits", {})
     outfit_data = model.get("outfit_data", {})
 
-    result = {}
-
     # -----------------------------------------
     # A. 提案コーデ (入力タイプを除いて出力)
     # -----------------------------------------
-    collected_outfits = []
+    recommend_coordinates = []
     seen_outfit_ids = set()
 
     for iid, _ in similar_items:
         oids = item_to_outfits.get(iid, [])
         for oid in oids:
             if oid in seen_outfit_ids: continue
-            
+
             info = outfit_data.get(oid)
             if not info: continue
-            
-            # コーデ情報の構築
-            coord_content = {"コーデ画像名": info.get("image_name", "")}
+
+            # コーデ情報の構築（英語キー）
+            coord_content = {"coordinate_image": info.get("image_name", "")}
             # 出力に必要なキーを初期化（入力タイプ以外）
             target_output_types = [t for t in ALL_TYPES if t != exclude_type]
             for t in target_output_types:
-                coord_content[t] = []
-            
+                eng_key = TYPE_TO_ENGLISH[t]
+                coord_content[eng_key] = []
+
             # コーデ内アイテムを振り分け
             for member_id in info.get("items", []):
                 if member_id not in items: continue
                 m_detail = items[member_id]
                 m_type = m_detail["item_type"]
-                
+
                 # 入力タイプと同じものはコーデリストに含めない
                 if m_type == exclude_type:
                     continue
 
-                if m_type in coord_content:
-                    coord_content[m_type].append(member_id)
+                if m_type in TYPE_TO_ENGLISH:
+                    eng_key = TYPE_TO_ENGLISH[m_type]
+                    if eng_key in coord_content:
+                        coord_content[eng_key].append(member_id)
 
             # JSON文字列化
-            final_coord = {"コーデ画像名": coord_content["コーデ画像名"]}
+            final_coord = {"coordinate_image": coord_content["coordinate_image"]}
             for t in target_output_types:
-                final_coord[t] = " ".join(coord_content[t])
+                eng_key = TYPE_TO_ENGLISH[t]
+                final_coord[eng_key] = " ".join(coord_content[eng_key])
 
-            collected_outfits.append(final_coord)
+            recommend_coordinates.append(final_coord)
             seen_outfit_ids.add(oid)
-            if len(collected_outfits) >= num_outfits: break
-        if len(collected_outfits) >= num_outfits: break
-
-    for i, coord in enumerate(collected_outfits):
-        result[f"提案コーデ{i+1}"] = coord
+            if len(recommend_coordinates) >= num_outfits: break
+        if len(recommend_coordinates) >= num_outfits: break
 
     # -----------------------------------------
     # B. カテゴリ別一覧 (入力タイプを除いて出力)
     # -----------------------------------------
     co_occurring = recs.get(best_match_id, {})
-    
+
     # 出力対象のカテゴリのみリスト化
     target_list_types = [t for t in ALL_TYPES if t != exclude_type]
 
+    category_lists = {}
     for t in target_list_types:
-        json_key = f"{t}一覧"
+        eng_key = TYPE_TO_ENGLISH[t]
+        json_key = f"{eng_key}_list"
         candidates = []
-        
+
         # 共起リストから取得
         c_ids = co_occurring.get(t, [])
         for cid in c_ids:
             if cid in items:
                 candidates.append(cid)
-        
+
         unique_candidates = list(dict.fromkeys(candidates))
-        
+
         # 不足時の補填
         if len(unique_candidates) < num_candidates and len(similar_items) > 1:
             second_id, _ = similar_items[1]
@@ -200,7 +210,13 @@ def recommend(
                     candidates.append(cid)
             unique_candidates = list(dict.fromkeys(candidates))
 
-        result[json_key] = unique_candidates[:num_candidates]
+        category_lists[json_key] = unique_candidates[:num_candidates]
+
+    # 最終結果を返す
+    result = {
+        "recommend_coordinates": recommend_coordinates,
+        **category_lists
+    }
 
     return result
 
