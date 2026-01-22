@@ -145,7 +145,8 @@ def recommend(
             if not info: continue
 
             # コーデ情報の構築（英語キー）
-            coord_content = {"coordinate_image": info.get("image_name", "")}
+            image_name = info.get("image_name", "")
+            coord_content = {"coordinate_image_path": f"coordinates/google/{image_name}.png"}
             # 出力に必要なキーを初期化（入力タイプ以外）
             target_output_types = [t for t in ALL_TYPES if t != exclude_type]
             for t in target_output_types:
@@ -168,7 +169,7 @@ def recommend(
                         coord_content[eng_key].append(member_id)
 
             # 各カテゴリの最初のアイテムを name と image_paths 形式に変換
-            final_coord = {"coordinate_image": coord_content["coordinate_image"]}
+            final_coord = {"coordinate_image_path": coord_content["coordinate_image_path"]}
             for t in target_output_types:
                 eng_key = TYPE_TO_ENGLISH[t]
                 item_ids = coord_content[eng_key]
