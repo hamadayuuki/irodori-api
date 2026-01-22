@@ -806,14 +806,14 @@ def transform_response_with_images(
     """
     transformed = {}
 
-    # Transform outfit recommendations
+    # Transform 提案コーデ
     for key in recommend_result.keys():
-        if key.startswith("outfit_"):
+        if key.startswith("提案コーデ"):
             outfit = recommend_result[key]
-            transformed_outfit = {"outfit_image_name": outfit.get("outfit_image_name", "")}
+            transformed_outfit = {"コーデ画像名": outfit.get("コーデ画像名", "")}
 
             for category_key, item_value in outfit.items():
-                if category_key == "outfit_image_name":
+                if category_key == "コーデ画像名":
                     continue
 
                 # Handle space-separated items (accessories)
@@ -824,35 +824,35 @@ def transform_response_with_images(
                         # Single item
                         item_id = items[0]
                         transformed_outfit[category_key] = {
-                            "item_id": item_id,
-                            "image_urls": image_map.get(item_id, [])
+                            "アイテム名": item_id,
+                            "画像URL": image_map.get(item_id, [])
                         }
                     else:
                         # Multiple items (e.g., accessories)
                         transformed_outfit[category_key] = [
                             {
-                                "item_id": item_id,
-                                "image_urls": image_map.get(item_id, [])
+                                "アイテム名": item_id,
+                                "画像URL": image_map.get(item_id, [])
                             }
                             for item_id in items
                         ]
                 else:
                     # Empty item
                     transformed_outfit[category_key] = {
-                        "item_id": "",
-                        "image_urls": []
+                        "アイテム名": "",
+                        "画像URL": []
                     }
 
             transformed[key] = transformed_outfit
 
-    # Transform category item lists
+    # Transform カテゴリ一覧
     for key in recommend_result.keys():
-        if key.endswith("_list"):
+        if key.endswith("一覧"):
             item_list = recommend_result[key]
             transformed[key] = [
                 {
-                    "item_id": item_id,
-                    "image_urls": image_map.get(item_id, [])
+                    "アイテム名": item_id,
+                    "画像URL": image_map.get(item_id, [])
                 }
                 for item_id in item_list
             ]
@@ -995,36 +995,3 @@ async def health_coordinate_recommend():
             "message": f"Test failed: {str(e)}",
             "result": None
         }
-
-
-@app.get("/cache/stats")
-async def get_cache_stats():
-    """
-    Get image cache statistics.
-    """
-    try:
-        stats = FirebaseService.get_cache_stats()
-        return {
-            "status": "success",
-            "cache_stats": stats
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting cache stats: {str(e)}")
-
-
-@app.delete("/cache/clear")
-async def clear_cache(item_id: Optional[str] = None):
-    """
-    Clear image cache.
-
-    Args:
-        item_id: Optional item ID to clear specific cache entry. If not provided, clears entire cache.
-    """
-    try:
-        FirebaseService.clear_image_cache(item_id)
-        return {
-            "status": "success",
-            "message": f"Cache cleared for item: {item_id}" if item_id else "Entire cache cleared"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error clearing cache: {str(e)}")

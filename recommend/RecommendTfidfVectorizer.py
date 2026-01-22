@@ -133,23 +133,23 @@ def recommend(
         oids = item_to_outfits.get(iid, [])
         for oid in oids:
             if oid in seen_outfit_ids: continue
-
+            
             info = outfit_data.get(oid)
             if not info: continue
-
+            
             # コーデ情報の構築
-            coord_content = {"outfit_image_name": info.get("image_name", "")}
+            coord_content = {"コーデ画像名": info.get("image_name", "")}
             # 出力に必要なキーを初期化（入力タイプ以外）
             target_output_types = [t for t in ALL_TYPES if t != exclude_type]
             for t in target_output_types:
                 coord_content[t] = []
-
+            
             # コーデ内アイテムを振り分け
             for member_id in info.get("items", []):
                 if member_id not in items: continue
                 m_detail = items[member_id]
                 m_type = m_detail["item_type"]
-
+                
                 # 入力タイプと同じものはコーデリストに含めない
                 if m_type == exclude_type:
                     continue
@@ -158,7 +158,7 @@ def recommend(
                     coord_content[m_type].append(member_id)
 
             # JSON文字列化
-            final_coord = {"outfit_image_name": coord_content["outfit_image_name"]}
+            final_coord = {"コーデ画像名": coord_content["コーデ画像名"]}
             for t in target_output_types:
                 final_coord[t] = " ".join(coord_content[t])
 
@@ -168,18 +168,18 @@ def recommend(
         if len(collected_outfits) >= num_outfits: break
 
     for i, coord in enumerate(collected_outfits):
-        result[f"outfit_{i+1}"] = coord
+        result[f"提案コーデ{i+1}"] = coord
 
     # -----------------------------------------
     # B. カテゴリ別一覧 (入力タイプを除いて出力)
     # -----------------------------------------
     co_occurring = recs.get(best_match_id, {})
-
+    
     # 出力対象のカテゴリのみリスト化
     target_list_types = [t for t in ALL_TYPES if t != exclude_type]
 
     for t in target_list_types:
-        json_key = f"{t}_list"
+        json_key = f"{t}一覧"
         candidates = []
         
         # 共起リストから取得
