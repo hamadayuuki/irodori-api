@@ -177,10 +177,9 @@ def recommend(
                 if item_ids and len(item_ids) > 0:
                     # 最初のアイテムを使用
                     first_item_id = item_ids[0]
-                    item_detail = items.get(first_item_id, {})
 
-                    # アイテム名を取得（item_nameフィールドまたはitem_idをフォールバック）
-                    item_name = item_detail.get("item_name", first_item_id)
+                    # アイテムIDをそのまま名前として使用（タイプ_カテゴリ_色 の形式）
+                    item_name = first_item_id
 
                     # image_paths を生成 (00.png から 09.png)
                     image_paths = [f"items/{item_name}/{i:02d}.png" for i in range(10)]
