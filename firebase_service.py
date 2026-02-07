@@ -232,7 +232,7 @@ class FirebaseService:
             }
 
             # Save to Firestore
-            doc_ref = self.db.collection('coordinates').document(coordinate_id)
+            doc_ref = self.db.collection('fashion-review').document(coordinate_id)
             doc_ref.set(coordinate_data)
 
             return coordinate_data
@@ -309,7 +309,7 @@ class FirebaseService:
         try:
             # Query coordinates by user_id, ordered by date
             docs = (
-                self.db.collection('coordinates')
+                self.db.collection('fashion-review')
                 .where('user_id', '==', user_id)
                 .order_by('created_at', direction=firestore.Query.DESCENDING)
                 .limit(limit)
@@ -369,7 +369,7 @@ class FirebaseService:
             dict or None: Coordinate data
         """
         try:
-            doc = self.db.collection('coordinates').document(coordinate_id).get()
+            doc = self.db.collection('fashion-review').document(coordinate_id).get()
             if doc.exists:
                 data = doc.to_dict()
                 # Convert Timestamp to string
