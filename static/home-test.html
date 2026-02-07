@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home API Health Check</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 12px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+        button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #357abd;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 24px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            background-color: #fcebe9;
+            border-color: #f5c6cb;
+        }
+        .success {
+            color: #2e7d32;
+            background-color: #e8f5e9;
+            border-color: #c8e6c9;
+        }
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            color: #666;
+        }
+        .preview-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .preview-image {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .image-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Home API Tester</h1>
+        
+        <div class="input-group">
+            <label for="userId">User ID</label>
+            <input type="text" id="userId" placeholder="Enter User ID to test (e.g., test-user-id)" value="test-user-id">
+        </div>
+
+        <button id="testBtn" onclick="testHomeApi()">Test API</button>
+
+        <div id="loading" class="loading">Fetching data...</div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testHomeApi() {
+            const userId = document.getElementById('userId').value.trim();
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('testBtn');
+            const loading = document.getElementById('loading');
+
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
+
+            // UI update
+            btn.disabled = true;
+            loading.style.display = 'block';
+            resultDiv.style.display = 'none';
+            resultDiv.className = '';
+
+            try {
+                // Call the actual API endpoint
+                const response = await fetch(`/api/home?user_id=${encodeURIComponent(userId)}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    resultDiv.classList.add('success');
+                    
+                    // Format output nicely
+                    let html = `<h3>✅ Success (Status: ${response.status})</h3>`;
+                    
+                    // Display tags
+                    html += `<h4>Tags (${data.tags.length})</h4>`;
+                    if (data.tags.length > 0) {
+                        html += `<p>${data.tags.join(', ')}</p>`;
+                    } else {
+                        html += `<p class="text-muted">No tags found</p>`;
+                    }
+
+                    // Display images
+                    html += `<h4>Recent Coordinates (${data.recent_coordinates.length})</h4>`;
+                    if (data.recent_coordinates.length > 0) {
+                        html += '<div class="preview-images">';
+                        data.recent_coordinates.forEach(coord => {
+                            html += `
+                                <div class="image-card">
+                                    <img src="${coord.image_url}" class="preview-image" alt="Coordinate" onerror="this.src='https://via.placeholder.com/100x150?text=No+Image'">
+                                    <span>${coord.date}</span>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    } else {
+                        html += `<p>No coordinates found.</p>`;
+                    }
+
+                    // Raw JSON
+                    html += `<h4>Raw Response</h4>`;
+                    html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.classList.add('error');
+                resultDiv.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <pre>${error.message}</pre>
+                `;
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

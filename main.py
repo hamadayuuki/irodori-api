@@ -509,6 +509,56 @@ async def healthAnalysisCoordinate():
         }
 
 
+@app.get("/health/home-ui", response_class=HTMLResponse)
+async def home_ui_test():
+    """
+    Serve the UI for testing the Home API.
+    """
+    with open("static/home-test.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/health/home")
+async def health_home():
+    """
+    Health check for home API.
+    Uses a dummy user_id or tries to fetch data to ensure logic works.
+    """
+    try:
+        firebase_service = FirebaseService()
+        
+        # Use a known test user ID or a random one to check empty state
+        test_user_id = "test-user-id"
+        
+        print(f"Testing home API with user_id: {test_user_id}")
+        data = firebase_service.get_home_data(test_user_id)
+        
+        recent_count = len(data.get("recent_coordinates", []))
+        tags_count = len(data.get("tags", []))
+        
+        return {
+            "status": "success",
+            "message": "Home API logic check completed",
+            "test_user_id": test_user_id,
+            "data_summary": {
+                "recent_coordinates_count": recent_count,
+                "tags_count": tags_count,
+                "first_coordinate_date": data.get("recent_coordinates", [])[0].get("date") if recent_count > 0 else None
+            },
+            "raw_data_sample": {
+                "recent_coordinates": data.get("recent_coordinates", [])[:1], # Show only 1
+                "tags": data.get("tags", [])[:5] # Show first 5
+            }
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Home API test failed: {str(e)}"
+        }
+
+
 @app.get("/health/fashion-review")
 async def health_fashion_review():
     """
