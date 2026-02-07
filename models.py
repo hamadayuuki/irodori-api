@@ -106,3 +106,15 @@ class CoordinateRecommendRequest(BaseModel):
     text: str
     num_outfits: int = 3
     num_candidates: int = 5
+
+
+# Home API Models
+class HomeRecentCoordinate(BaseModel):
+    id: str
+    image_url: str
+    date: str
+
+class HomeResponse(BaseModel):
+    recent_coordinates: List[HomeRecentCoordinate]
+    analysis_summary: str
+    tags: List[str]

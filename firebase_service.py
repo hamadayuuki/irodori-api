@@ -432,3 +432,75 @@ class FirebaseService:
             result[item_id] = self.get_item_images(item_id)
 
         return result
+
+    def get_home_data(self, user_id: str) -> Dict[str, Any]:
+        """
+        Get data for home screen (recent coordinates and aggregated tags).
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            dict: {
+                "recent_coordinates": [...],
+                "tags": [...]
+            }
+        """
+        try:
+            # Fetch recent 30 coordinates to aggregate tags and get recent 7 for display
+            docs = (
+                self.db.collection('fashion-review')
+                .where('user_id', '==', user_id)
+                .order_by('created_at', direction=firestore.Query.DESCENDING)
+                .limit(30)
+                .stream()
+            )
+
+            all_coordinates = []
+            tags_set = set()
+
+            for doc in docs:
+                data = doc.to_dict()
+                
+                # Format date
+                date_str = data.get('date', '')
+                if not date_str and 'created_at' in data and data['created_at']:
+                    # Fallback to created_at if date field is missing
+                    try:
+                        ts = data['created_at']
+                        if hasattr(ts, 'date'):
+                            date_str = ts.date().strftime('%Y/%m/%d')
+                        elif hasattr(ts, 'strftime'):
+                            date_str = ts.strftime('%Y/%m/%d')
+                    except Exception:
+                        pass
+
+                all_coordinates.append({
+                    'id': data.get('id', doc.id),
+                    'image_url': data.get('coordinate_image_path', ''),
+                    'date': date_str
+                })
+
+                # Aggregate tags
+                if 'tags' in data and isinstance(data['tags'], list):
+                    for tag in data['tags']:
+                        if tag:
+                            tags_set.add(tag)
+
+            # Get top 7 for display
+            recent_coordinates = all_coordinates[:7]
+            
+            # Convert tags set to list
+            tags = list(tags_set)
+
+            return {
+                "recent_coordinates": recent_coordinates,
+                "tags": tags
+            }
+
+        except Exception as e:
+            print(f"Error getting home data: {e}")
+            return {
+                "recent_coordinates": [],
+                "tags": []
+            }

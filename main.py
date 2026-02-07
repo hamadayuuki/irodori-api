@@ -16,7 +16,7 @@ from models import (
     RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount,
     AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse,
     FashionReviewResponse, FashionReviewCurrentCoordinate, FashionReviewRecentCoordinate,
-    FashionReviewItem, CoordinateRecommendRequest
+    FashionReviewItem, CoordinateRecommendRequest, HomeResponse, HomeRecentCoordinate
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -603,6 +603,32 @@ async def health_fashion_review():
             "message": f"Test failed: {str(e)}",
             "result": None
         }
+
+
+@app.get("/api/home", response_model=HomeResponse)
+async def home_data(user_id: str):
+    """
+    Home screen API endpoint.
+    Returns recent coordinates and user tags.
+    
+    Args:
+        user_id: User ID (query parameter)
+        
+    Returns:
+        HomeResponse: Dashboard data
+    """
+    firebase_service = FirebaseService()
+    
+    print(f"Fetching home data for user: {user_id}")
+    data = firebase_service.get_home_data(user_id)
+    
+    return HomeResponse(
+        recent_coordinates=[
+            HomeRecentCoordinate(**item) for item in data.get("recent_coordinates", [])
+        ],
+        analysis_summary="",  # Currently empty as requested
+        tags=data.get("tags", [])
+    )
 
 
 @app.post("/api/fashion_review", response_model=FashionReviewResponse)
