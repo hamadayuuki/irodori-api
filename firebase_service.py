@@ -447,14 +447,56 @@ class FirebaseService:
             }
         """
         try:
-            # Fetch recent 30 coordinates to aggregate tags and get recent 7 for display
-            docs = (
-                self.db.collection('fashion-review')
-                .where('user_id', '==', user_id)
-                .order_by('created_at', direction=firestore.Query.DESCENDING)
-                .limit(30)
-                .stream()
-            )
+            print(f"[Debug] Fetching home data for user: {user_id}")
+            
+            # Try 'fashion-review' collection first
+            try:
+                docs_stream = (
+                    self.db.collection('fashion-review')
+                    .where('user_id', '==', user_id)
+                    .order_by('created_at', direction=firestore.Query.DESCENDING)
+                    .limit(30)
+                    .stream()
+                )
+                docs = list(docs_stream)
+            except Exception as e:
+                print(f"[Warning] Query failed (likely missing index): {e}")
+                print("[Info] Retrying without order_by...")
+                docs_stream = (
+                    self.db.collection('fashion-review')
+                    .where('user_id', '==', user_id)
+                    .limit(30)
+                    .stream()
+                )
+                docs = list(docs_stream)
+                # Sort in memory
+                docs.sort(key=lambda x: x.to_dict().get('created_at', ''), reverse=True)
+            
+            print(f"[Debug] Found {len(docs)} docs in 'fashion-review'")
+
+            # If no docs found, try legacy 'coordinates' collection
+            if not docs:
+                print(f"[Debug] 'fashion-review' empty, trying 'coordinates' collection")
+                try:
+                    docs_stream = (
+                        self.db.collection('coordinates')
+                        .where('user_id', '==', user_id)
+                        .order_by('created_at', direction=firestore.Query.DESCENDING)
+                        .limit(30)
+                        .stream()
+                    )
+                    docs = list(docs_stream)
+                except Exception as e:
+                    print(f"[Warning] Legacy query failed: {e}")
+                    docs_stream = (
+                        self.db.collection('coordinates')
+                        .where('user_id', '==', user_id)
+                        .limit(30)
+                        .stream()
+                    )
+                    docs = list(docs_stream)
+                
+                print(f"[Debug] Found {len(docs)} docs in 'coordinates'")
 
             all_coordinates = []
             tags_set = set()
@@ -475,9 +517,14 @@ class FirebaseService:
                     except Exception:
                         pass
 
+                image_url = data.get('coordinate_image_path', '')
+                # Fallback for old data structure
+                if not image_url:
+                    image_url = data.get('image_path', '')
+
                 all_coordinates.append({
                     'id': data.get('id', doc.id),
-                    'image_url': data.get('coordinate_image_path', ''),
+                    'image_url': image_url,
                     'date': date_str
                 })
 
@@ -492,6 +539,8 @@ class FirebaseService:
             
             # Convert tags set to list
             tags = list(tags_set)
+            
+            print(f"[Debug] Returning {len(recent_coordinates)} coords and {len(tags)} tags")
 
             return {
                 "recent_coordinates": recent_coordinates,
