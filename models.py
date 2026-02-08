@@ -115,6 +115,35 @@ class HomeRecentCoordinate(BaseModel):
     date: str
 
 class HomeResponse(BaseModel):
+
     recent_coordinates: List[HomeRecentCoordinate]
+
     analysis_summary: str
+
     tags: List[str]
+
+
+
+
+
+# Closet API Models
+
+class ClosetItem(BaseModel):
+
+    id: str
+
+    item_type: str
+
+    category: Optional[str] = None
+
+    color: Optional[str] = None
+
+    image_url: Optional[str] = None
+
+    date: Optional[str] = None
+
+
+
+class ClosetResponse(BaseModel):
+
+    items: List[ClosetItem]

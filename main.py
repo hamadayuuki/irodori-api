@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any
 import urllib
 import urllib.parse
 import random
+from datetime import datetime
 
 from pydantic import BaseModel
 import requests
@@ -16,7 +17,8 @@ from models import (
     RecommendCoordinatesRequest, RecommendCoordinatesResponse, GenreCount,
     AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse,
     FashionReviewResponse, FashionReviewCurrentCoordinate, FashionReviewRecentCoordinate,
-    FashionReviewItem, CoordinateRecommendRequest, HomeResponse, HomeRecentCoordinate
+    FashionReviewItem, CoordinateRecommendRequest, HomeResponse, HomeRecentCoordinate,
+    ClosetItem, ClosetResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -681,6 +683,52 @@ async def home_data(user_id: str):
     )
 
 
+@app.get("/api/closet", response_model=ClosetResponse)
+async def get_closet_items(user_id: str, item_type: Optional[str] = None):
+    """
+    Closet API endpoint.
+    Returns user's items, optionally filtered by type.
+    
+    Args:
+        user_id: User ID
+        item_type: Filter by item type (e.g., 'トップス', 'ボトムス')
+        
+    Returns:
+        ClosetResponse: List of items
+    """
+    firebase_service = FirebaseService()
+    
+    print(f"Fetching closet items for user: {user_id}, type: {item_type}")
+    items_data = firebase_service.get_user_items(user_id, item_type)
+    
+    items = []
+    for data in items_data:
+        # Format date
+        date_str = ''
+        if 'created_at' in data and data['created_at']:
+             try:
+                # Assuming created_at is already converted to string in service
+                # If it's isoformat, we might want to simplify it to YYYY/MM/DD
+                ts_str = str(data['created_at'])
+                if 'T' in ts_str:
+                     date_obj = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+                     date_str = date_obj.strftime('%Y/%m/%d')
+                else:
+                     date_str = ts_str
+             except:
+                 pass
+
+        items.append(ClosetItem(
+            id=data.get('id', ''),
+            item_type=data.get('item_type', ''),
+            category=data.get('category'),
+            color=data.get('color'),
+            image_url=data.get('image_url'),
+            date=date_str
+        ))
+    
+    return ClosetResponse(items=items)
+
 @app.post("/api/fashion_review", response_model=FashionReviewResponse)
 async def fashion_review(
     user_id: str = Form(...),
@@ -774,6 +822,23 @@ async def fashion_review(
             items=items_for_firestore,
             item_types=ai_review.get("item_types", [])
         )
+
+        # Save individual items to user's closet (users/{user_id}/items)
+        print("Saving items to user's closet...")
+        for item in items_for_firestore:
+            try:
+                firebase_service.save_user_item(
+                    user_id=user_id,
+                    item_id=item['id'],
+                    coordinate_id=coordinate_id,
+                    item_type=item['item_type'],
+                    category=item.get('category'),
+                    color=item.get('color'),
+                    image_url=coordinate_image_url, # Using coordinate image for now
+                    description=item.get('description')
+                )
+            except Exception as e:
+                print(f"Failed to save item to closet: {e}")
 
         # Get user's recent coordinates
         print("Fetching recent coordinates...")

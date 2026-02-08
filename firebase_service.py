@@ -504,3 +504,93 @@ class FirebaseService:
                 "recent_coordinates": [],
                 "tags": []
             }
+
+    def save_user_item(
+        self,
+        user_id: str,
+        item_id: str,
+        coordinate_id: str,
+        item_type: str,
+        category: Optional[str] = None,
+        color: Optional[str] = None,
+        image_url: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Save item to user's sub-collection.
+
+        Args:
+            user_id: User ID
+            item_id: Item ID
+            coordinate_id: Parent coordinate ID
+            item_type: Type (tops, bottoms, etc.)
+            category: Specific category
+            color: Color
+            image_url: URL to item image or coordinate image
+            description: Description/Tags
+
+        Returns:
+            dict: Saved item data
+        """
+        try:
+            item_data = {
+                'id': item_id,
+                'user_id': user_id,
+                'coordinate_id': coordinate_id,
+                'item_type': item_type,
+                'category': category,
+                'color': color,
+                'image_url': image_url,
+                'description': description,
+                'created_at': firestore.SERVER_TIMESTAMP
+            }
+
+            # Save to users/{user_id}/items/{item_id}
+            doc_ref = self.db.collection('users').document(user_id).collection('items').document(item_id)
+            doc_ref.set(item_data)
+
+            return item_data
+        except Exception as e:
+            print(f"Error saving user item: {e}")
+            raise
+
+    def get_user_items(
+        self,
+        user_id: str,
+        item_type: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """
+        Get items from user's closet.
+
+        Args:
+            user_id: User ID
+            item_type: Optional filter by item type
+            limit: Max items to fetch
+
+        Returns:
+            list: List of item data
+        """
+        try:
+            query = self.db.collection('users').document(user_id).collection('items')
+
+            if item_type:
+                query = query.where('item_type', '==', item_type)
+            
+            # Order by created_at desc
+            query = query.order_by('created_at', direction=firestore.Query.DESCENDING).limit(limit)
+
+            docs = query.stream()
+
+            items = []
+            for doc in docs:
+                data = doc.to_dict()
+                # Format timestamps
+                if 'created_at' in data and data['created_at']:
+                    data['created_at'] = data['created_at'].isoformat() if hasattr(data['created_at'], 'isoformat') else str(data['created_at'])
+                items.append(data)
+
+            return items
+        except Exception as e:
+            print(f"Error getting user items: {e}")
+            return []
