@@ -625,7 +625,7 @@ class FirebaseService:
 
             if item_type:
                 query = query.where('item_type', '==', item_type)
-            
+
             # Order by created_at desc
             query = query.order_by('created_at', direction=firestore.Query.DESCENDING).limit(limit)
 
@@ -643,3 +643,70 @@ class FirebaseService:
         except Exception as e:
             print(f"Error getting user items: {e}")
             return []
+
+    def get_recent_coordinates_with_tags(
+        self,
+        user_id: str,
+        target_days: int = 7,
+        limit: int = 3
+    ) -> List[List[str]]:
+        """
+        Get tags from user's recent coordinates within target_days period.
+
+        Args:
+            user_id: User ID
+            target_days: Number of days to look back (default: 7)
+            limit: Maximum number of coordinates to retrieve (default: 3)
+
+        Returns:
+            list: List of tag lists from recent coordinates
+        """
+        try:
+            from datetime import datetime, timedelta
+
+            # Calculate the cutoff date
+            cutoff_date = datetime.now() - timedelta(days=target_days)
+
+            # Query coordinates by user_id, ordered by created_at
+            docs = (
+                self.db.collection('fashion-review')
+                .where('user_id', '==', user_id)
+                .where('created_at', '>=', cutoff_date)
+                .order_by('created_at', direction=firestore.Query.DESCENDING)
+                .limit(limit)
+                .stream()
+            )
+
+            tags_list = []
+            for doc in docs:
+                data = doc.to_dict()
+                tags = data.get('tags', [])
+                if tags:
+                    tags_list.append(tags)
+
+            print(f"[Firebase] Found {len(tags_list)} coordinates with tags within {target_days} days")
+            return tags_list
+
+        except Exception as e:
+            print(f"Error getting recent coordinates with tags: {e}")
+            # Fallback: try without date filter
+            try:
+                docs = (
+                    self.db.collection('fashion-review')
+                    .where('user_id', '==', user_id)
+                    .limit(limit)
+                    .stream()
+                )
+
+                tags_list = []
+                for doc in docs:
+                    data = doc.to_dict()
+                    tags = data.get('tags', [])
+                    if tags:
+                        tags_list.append(tags)
+
+                print(f"[Firebase] Fallback: Found {len(tags_list)} coordinates with tags")
+                return tags_list
+            except Exception as fallback_error:
+                print(f"Fallback error getting coordinates: {fallback_error}")
+                return []
