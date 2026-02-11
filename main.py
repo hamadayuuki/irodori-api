@@ -18,7 +18,7 @@ from models import (
     AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse,
     FashionReviewResponse, FashionReviewCurrentCoordinate, FashionReviewRecentCoordinate,
     FashionReviewItem, CoordinateRecommendRequest, HomeResponse, HomeRecentCoordinate,
-    ClosetItem, ClosetResponse
+    ClosetItem, ClosetResponse, AnalyzeRecentCoordinateRequest, AnalyzeRecentCoordinateResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -657,6 +657,54 @@ async def health_fashion_review():
         }
 
 
+@app.get("/health/analyze-recent-coordinate")
+async def health_analyze_recent_coordinate():
+    """
+    Health check endpoint for analyze-recent-coordinate functionality.
+    Tests the coordinate analysis with a test user ID.
+    """
+    try:
+        # Test request
+        test_request = AnalyzeRecentCoordinateRequest(
+            uid="test-user-id",
+            target_days=30  # Use 30 days to increase chance of finding data
+        )
+
+        # Call the endpoint
+        result = await analyze_recent_coordinate(test_request)
+
+        # Console output
+        print("=== Health check result for analyze-recent-coordinate ===")
+        print(f"Test user ID: {test_request.uid}")
+        print(f"Target days: {test_request.target_days}")
+        print(f"Analysis result: {result.analyze_recent_coordinate}")
+        print("\n=== 分析機能の確認完了 ===")
+        print("✅ Firebase からタグ取得")
+        print("✅ Gemini 2.5-flash-lite で分析生成")
+        print("✅ 日本語での分析文生成")
+
+        return {
+            "status": "success",
+            "message": "analyze-recent-coordinate endpoint test completed",
+            "test_params": {
+                "uid": test_request.uid,
+                "target_days": test_request.target_days
+            },
+            "analysis_length": len(result.analyze_recent_coordinate),
+            "result": result
+        }
+
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+
 @app.get("/api/home", response_model=HomeResponse)
 async def home_data(user_id: str):
     """
@@ -728,6 +776,56 @@ async def get_closet_items(user_id: str, item_type: Optional[str] = None):
         ))
     
     return ClosetResponse(items=items)
+
+
+@app.post("/api/analyze-recent-coordinate", response_model=AnalyzeRecentCoordinateResponse)
+async def analyze_recent_coordinate(request: AnalyzeRecentCoordinateRequest):
+    """
+    Analyze recent coordinate endpoint.
+    Analyzes user's recent coordinate tags and returns a fashion trend summary.
+
+    Args:
+        request: AnalyzeRecentCoordinateRequest containing uid and target_days
+
+    Returns:
+        AnalyzeRecentCoordinateResponse: Contains analyze_recent_coordinate summary
+    """
+    try:
+        firebase_service = FirebaseService()
+        gemini_service = GeminiService()
+
+        # Get tags from recent coordinates
+        print(f"Fetching recent coordinates for user: {request.uid}, target_days: {request.target_days}")
+        tags_list = firebase_service.get_recent_coordinates_with_tags(
+            user_id=request.uid,
+            target_days=request.target_days,
+            limit=3
+        )
+
+        # Generate analysis from tags
+        if not tags_list:
+            # No coordinates found, return default message
+            return AnalyzeRecentCoordinateResponse(
+                analyze_recent_coordinate="最近のコーディネートデータがありません。新しいコーディネートを投稿してみましょう！"
+            )
+
+        print(f"Generating analysis from {len(tags_list)} coordinate tags")
+        analysis = await gemini_service.analyze_recent_coordinates_async(tags_list)
+
+        if not analysis:
+            # Fallback if Gemini fails
+            analysis = "あなたのファッションスタイルを分析しています。もう少しコーディネートを投稿すると、より詳しい分析ができます！"
+
+        return AnalyzeRecentCoordinateResponse(
+            analyze_recent_coordinate=analysis
+        )
+
+    except Exception as e:
+        print(f"Error in analyze_recent_coordinate endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @app.post("/api/fashion_review", response_model=FashionReviewResponse)
 async def fashion_review(

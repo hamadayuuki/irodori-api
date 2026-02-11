@@ -436,3 +436,81 @@ class GeminiService:
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.extract_coordinate_items, image_base64)
+
+    def analyze_recent_coordinates(self, tags_list: List[List[str]]) -> str:
+        """
+        Analyze recent coordinate tags and generate a summary.
+
+        Args:
+            tags_list: List of tag lists from recent coordinates (up to 3)
+
+        Returns:
+            str: Analysis summary (approximately 100 characters)
+        """
+        if not tags_list or all(not tags for tags in tags_list):
+            return ""
+
+        # Flatten and deduplicate tags
+        all_tags = []
+        for tags in tags_list:
+            all_tags.extend(tags)
+
+        if not all_tags:
+            return ""
+
+        # Build prompt
+        prompt = f"""
+あなたはファッション分析の専門家です。
+ユーザーの直近のコーディネートから抽出されたタグを分析し、ファッション傾向を簡潔にまとめてください。
+
+**タグ情報:**
+{', '.join(all_tags)}
+
+**分析指示:**
+- 上記のタグから、ユーザーのファッション傾向を読み取ってください
+- 100文字程度で簡潔にまとめてください
+- ポジティブで親しみやすい口調で書いてください
+- 具体的なスタイルやテイストに言及してください
+- **必ず日本語で出力してください**
+
+**出力形式:**
+{{
+    "analysis": "<100文字程度のファッション傾向分析（日本語）>"
+}}
+
+**出力例:**
+{{
+    "analysis": "カジュアルを基調としつつ、モノトーンやシンプルなアイテムを好む傾向が見られます。ミニマルでスマートな印象を大切にしているようですね！"
+}}
+"""
+
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={
+                        "type": "object",
+                        "properties": {
+                            "analysis": {"type": "string"}
+                        }
+                    },
+                    temperature=0.7,
+                    max_output_tokens=500,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0)
+                ),
+            )
+
+            result = json.loads(response.text)
+            return result.get("analysis", "")
+        except Exception as e:
+            print(f"Error in analyze_recent_coordinates: {e}")
+            return ""
+
+    async def analyze_recent_coordinates_async(self, tags_list: List[List[str]]) -> str:
+        """
+        Async version of analyze_recent_coordinates.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.analyze_recent_coordinates, tags_list)

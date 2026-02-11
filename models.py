@@ -147,3 +147,12 @@ class ClosetItem(BaseModel):
 class ClosetResponse(BaseModel):
 
     items: List[ClosetItem]
+
+
+# Analyze Recent Coordinate API Models
+class AnalyzeRecentCoordinateRequest(BaseModel):
+    uid: str
+    target_days: int = 7
+
+class AnalyzeRecentCoordinateResponse(BaseModel):
+    analyze_recent_coordinate: str
