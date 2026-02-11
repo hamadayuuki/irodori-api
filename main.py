@@ -733,7 +733,9 @@ async def get_closet_items(user_id: str, item_type: Optional[str] = None):
 async def fashion_review(
     user_id: str = Form(...),
     user_token: str = Form(...),
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    tops_image: UploadFile = File(None),
+    bottoms_image: UploadFile = File(None)
 ):
     """
     Fashion review endpoint that analyzes full-body coordinate images.
@@ -772,6 +774,26 @@ async def fashion_review(
         print("Uploading image to Firebase Storage...")
         coordinate_image_url = firebase_service.upload_image(image_data, folder=f"coordinates/{user_id}")
 
+        # Upload individual item images if provided
+        tops_image_url = None
+        bottoms_image_url = None
+
+        if tops_image:
+            # Validate file type
+            if not tops_image.content_type or not tops_image.content_type.startswith('image/'):
+                raise HTTPException(status_code=400, detail="Invalid tops_image file type")
+            tops_image_data = await tops_image.read()
+            tops_image_url = firebase_service.upload_image(tops_image_data, folder=f"items/{user_id}/tops")
+            print(f"Uploaded tops_image: {tops_image_url}")
+
+        if bottoms_image:
+            # Validate file type
+            if not bottoms_image.content_type or not bottoms_image.content_type.startswith('image/'):
+                raise HTTPException(status_code=400, detail="Invalid bottoms_image file type")
+            bottoms_image_data = await bottoms_image.read()
+            bottoms_image_url = firebase_service.upload_image(bottoms_image_data, folder=f"items/{user_id}/bottoms")
+            print(f"Uploaded bottoms_image: {bottoms_image_url}")
+
         # Generate unique coordinate ID
         import uuid
         from datetime import datetime
@@ -780,18 +802,46 @@ async def fashion_review(
 
         # Prepare items data for saving
         extracted_items = ai_review.get("items", [])
+
+        # Validate that corresponding items exist for uploaded images
+        if tops_image_url:
+            has_tops = any(item.get('item_type') == 'トップス' for item in extracted_items)
+            if not has_tops:
+                raise HTTPException(status_code=400, detail="トップスの画像が送信されましたが、コーディネート画像からトップスが検出されませんでした")
+
+        if bottoms_image_url:
+            has_bottoms = any(item.get('item_type') == 'ボトムス' for item in extracted_items)
+            if not has_bottoms:
+                raise HTTPException(status_code=400, detail="ボトムスの画像が送信されましたが、コーディネート画像からボトムスが検出されませんでした")
+
+        # Flags to track image assignment (assign to first matching item only)
+        tops_assigned = False
+        bottoms_assigned = False
+
         items_for_firestore = []
         items_for_response = []
 
         for item_data in extracted_items:
             item_id = str(uuid.uuid4())
+            item_type = item_data.get('item_type', '')
+
+            # Determine item image path
+            item_image_path = ''
+            if item_type == 'トップス' and tops_image_url and not tops_assigned:
+                item_image_path = tops_image_url
+                tops_assigned = True
+                print(f"  Assigned tops_image to item: {item_data.get('category', 'Unknown')}")
+            elif item_type == 'ボトムス' and bottoms_image_url and not bottoms_assigned:
+                item_image_path = bottoms_image_url
+                bottoms_assigned = True
+                print(f"  Assigned bottoms_image to item: {item_data.get('category', 'Unknown')}")
 
             # Prepare item for Firestore (embedded in coordinate document)
             items_for_firestore.append({
                 'id': item_id,
                 'coordinate_id': coordinate_id,
-                'item_type': item_data.get('item_type', ''),
-                'item_image_path': '',
+                'item_type': item_type,
+                'item_image_path': item_image_path,
                 'category': item_data.get('category'),
                 'color': item_data.get('color'),
                 'description': item_data.get('description')
@@ -801,14 +851,14 @@ async def fashion_review(
             items_for_response.append(FashionReviewItem(
                 id=item_id,
                 coordinate_id=coordinate_id,
-                item_type=item_data.get('item_type', ''),
-                item_image_path='',
+                item_type=item_type,
+                item_image_path=item_image_path,
                 category=item_data.get('category'),
                 color=item_data.get('color'),
                 description=item_data.get('description')
             ))
 
-            print(f"  Prepared item: {item_data.get('item_type')} - {item_data.get('category')}")
+            print(f"  Prepared item: {item_type} - {item_data.get('category')}")
 
         # Save coordinate with items and item_types to Firestore
         print("Saving coordinate with items to Firestore...")
@@ -834,7 +884,7 @@ async def fashion_review(
                     item_type=item['item_type'],
                     category=item.get('category'),
                     color=item.get('color'),
-                    image_url=coordinate_image_url, # Using coordinate image for now
+                    image_url=item.get('item_image_path', coordinate_image_url),  # Use individual image if available
                     description=item.get('description')
                 )
             except Exception as e:
