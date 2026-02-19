@@ -710,3 +710,80 @@ class FirebaseService:
             except Exception as fallback_error:
                 print(f"Fallback error getting coordinates: {fallback_error}")
                 return []
+
+    def get_coordinates_by_month(
+        self,
+        user_id: str,
+        year: int,
+        month: int
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all coordinates for a specific month.
+
+        Args:
+            user_id: User ID
+            year: Target year
+            month: Target month (1-12)
+
+        Returns:
+            list: List of coordinate data for the month
+        """
+        try:
+            # Firestore date format is YYYY/MM/DD
+            date_start = f"{year:04d}/{month:02d}/01"
+            date_end = f"{year:04d}/{month:02d}/99"  # 99 > 31 covers all days
+
+            docs = (
+                self.db.collection('fashion-review')
+                .where('user_id', '==', user_id)
+                .where('date', '>=', date_start)
+                .where('date', '<=', date_end)
+                .stream()
+            )
+
+            coordinates = []
+            for doc in docs:
+                coordinates.append(doc.to_dict())
+
+            print(f"[Firebase] Found {len(coordinates)} coordinates for {year}/{month:02d}")
+            return coordinates
+
+        except Exception as e:
+            print(f"Error getting coordinates by month: {e}")
+            return []
+
+    def get_coordinate_by_date(
+        self,
+        user_id: str,
+        target_date: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get coordinate for a specific date.
+
+        Args:
+            user_id: User ID
+            target_date: Date string in YYYY-MM-DD format
+
+        Returns:
+            dict or None: Coordinate data
+        """
+        try:
+            # Convert YYYY-MM-DD to YYYY/MM/DD to match Firestore format
+            firestore_date = target_date.replace('-', '/')
+
+            docs = (
+                self.db.collection('fashion-review')
+                .where('user_id', '==', user_id)
+                .where('date', '==', firestore_date)
+                .limit(1)
+                .stream()
+            )
+
+            for doc in docs:
+                return doc.to_dict()
+
+            return None
+
+        except Exception as e:
+            print(f"Error getting coordinate by date: {e}")
+            return None

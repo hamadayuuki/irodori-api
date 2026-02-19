@@ -156,3 +156,32 @@ class AnalyzeRecentCoordinateRequest(BaseModel):
 
 class AnalyzeRecentCoordinateResponse(BaseModel):
     analyze_recent_coordinate: str
+
+
+# Calendar API Models
+class CoordinateListItem(BaseModel):
+    year: int
+    month: int
+    day: int
+    id: Optional[str] = None
+    coodinate_image_path: Optional[str] = None  # Note: typo matches iOS client
+
+
+class CoordinateDetailCurrentCoordinate(BaseModel):
+    id: str
+    date: str  # YYYY-MM-DD
+    coodinate_image_path: str  # Note: typo matches iOS client
+
+
+class CoordinateDetailItem(BaseModel):
+    id: str
+    coordinate_id: str
+    item_type: str
+    item_image_path: str
+
+
+class CoordinateDetailResponse(BaseModel):
+    current_coordinate: CoordinateDetailCurrentCoordinate
+    items: List[CoordinateDetailItem]
+    ai_catchphrase: str
+    ai_review_comment: str

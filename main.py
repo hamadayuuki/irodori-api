@@ -18,7 +18,9 @@ from models import (
     AnalysisCoordinateResponse, AffiliateProduct, ChatRequest, ChatResponse,
     FashionReviewResponse, FashionReviewCurrentCoordinate, FashionReviewRecentCoordinate,
     FashionReviewItem, CoordinateRecommendRequest, HomeResponse, HomeRecentCoordinate,
-    ClosetItem, ClosetResponse, AnalyzeRecentCoordinateRequest, AnalyzeRecentCoordinateResponse
+    ClosetItem, ClosetResponse, AnalyzeRecentCoordinateRequest, AnalyzeRecentCoordinateResponse,
+    CoordinateListItem, CoordinateDetailCurrentCoordinate, CoordinateDetailItem,
+    CoordinateDetailResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -1179,3 +1181,258 @@ async def health_coordinate_recommend():
             "message": f"Test failed: {str(e)}",
             "result": None
         }
+
+
+# ============================================================
+# Calendar API Health Checks
+# ============================================================
+
+@app.get("/health/coordinate-list")
+async def health_coordinate_list():
+    """
+    Health check for GET /api/coordinate/list/{uid}.
+    当月のコーディネートリストを test-user-id で取得し、レスポンス形式を確認する。
+    """
+    import calendar as cal_module
+
+    try:
+        test_user_id = "test-user-id"
+        now = datetime.now()
+        year, month = now.year, now.month
+
+        print(f"=== Health check: /api/coordinate/list ===")
+        print(f"  test_user_id: {test_user_id}")
+        print(f"  target: {year}/{month:02d}")
+
+        firebase = FirebaseService()
+        coordinates = firebase.get_coordinates_by_month(test_user_id, year, month)
+
+        coord_by_day: Dict[int, Dict[str, Any]] = {}
+        for coord in coordinates:
+            date_str = coord.get('date', '')
+            if date_str:
+                try:
+                    day = int(date_str.split('/')[2])
+                    coord_by_day[day] = coord
+                except (IndexError, ValueError):
+                    pass
+
+        _, num_days = cal_module.monthrange(year, month)
+        result = []
+        for day in range(1, num_days + 1):
+            if day in coord_by_day:
+                coord = coord_by_day[day]
+                result.append(CoordinateListItem(
+                    year=year,
+                    month=month,
+                    day=day,
+                    id=coord.get('id'),
+                    coodinate_image_path=coord.get('coordinate_image_path')
+                ))
+            else:
+                result.append(CoordinateListItem(
+                    year=year,
+                    month=month,
+                    day=day,
+                    id=None,
+                    coodinate_image_path=None
+                ))
+
+        filled_days = [item for item in result if item.id is not None]
+
+        print(f"  total days: {num_days}")
+        print(f"  days with coordinate: {len(filled_days)}")
+        print("✅ coordinate-list health check passed")
+
+        return {
+            "status": "success",
+            "message": "coordinate-list endpoint test completed",
+            "test_params": {
+                "uid": test_user_id,
+                "year": year,
+                "month": month
+            },
+            "summary": {
+                "total_days": num_days,
+                "days_with_coordinate": len(filled_days),
+                "days_without_coordinate": num_days - len(filled_days)
+            },
+            "sample": [item.model_dump() for item in result[:5]]
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+
+@app.get("/health/coordinate-date")
+async def health_coordinate_date():
+    """
+    Health check for GET /api/coordinate/date/{uid}/{target_date}.
+    今日の日付で test-user-id のコーディネート詳細取得を確認する。
+    """
+    try:
+        test_user_id = "test-user-id"
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        print(f"=== Health check: /api/coordinate/date ===")
+        print(f"  test_user_id: {test_user_id}")
+        print(f"  target_date: {today}")
+
+        firebase = FirebaseService()
+        coordinate = firebase.get_coordinate_by_date(test_user_id, today)
+
+        if not coordinate:
+            print(f"  No coordinate found for {today} (expected for test user)")
+            return {
+                "status": "success",
+                "message": "coordinate-date endpoint test completed (no data for test user)",
+                "test_params": {
+                    "uid": test_user_id,
+                    "target_date": today
+                },
+                "result": []
+            }
+
+        coord_date = coordinate.get('date', '').replace('/', '-')
+        items_data = coordinate.get('items', [])
+        items = [
+            CoordinateDetailItem(
+                id=item.get('id', ''),
+                coordinate_id=item.get('coordinate_id', coordinate.get('id', '')),
+                item_type=item.get('item_type', ''),
+                item_image_path=item.get('item_image_path', '')
+            )
+            for item in items_data
+        ]
+
+        response = CoordinateDetailResponse(
+            current_coordinate=CoordinateDetailCurrentCoordinate(
+                id=coordinate.get('id', ''),
+                date=coord_date,
+                coodinate_image_path=coordinate.get('coordinate_image_path', '')
+            ),
+            items=items,
+            ai_catchphrase=coordinate.get('ai_catchphrase', ''),
+            ai_review_comment=coordinate.get('ai_review_comment', '')
+        )
+
+        print(f"  coordinate_id: {coordinate.get('id')}")
+        print(f"  items_count: {len(items)}")
+        print("✅ coordinate-date health check passed")
+
+        return {
+            "status": "success",
+            "message": "coordinate-date endpoint test completed",
+            "test_params": {
+                "uid": test_user_id,
+                "target_date": today
+            },
+            "result": [response.model_dump()]
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+
+# ============================================================
+# Calendar API
+# ============================================================
+
+@app.get("/api/coordinate/list/{uid}", response_model=List[CoordinateListItem])
+async def get_coordinate_list(uid: str, year: int, month: int, page: int = 0):
+    """
+    指定ユーザーの指定年月のコーディネートリストを返す。
+    その月の全日付をレスポンスに含め、コーデがない日は id / coodinate_image_path を null にする。
+    """
+    import calendar as cal_module
+
+    firebase = FirebaseService()
+    coordinates = firebase.get_coordinates_by_month(uid, year, month)
+
+    # day -> coordinate data のマッピングを構築
+    coord_by_day: Dict[int, Dict[str, Any]] = {}
+    for coord in coordinates:
+        date_str = coord.get('date', '')  # YYYY/MM/DD
+        if date_str:
+            try:
+                day = int(date_str.split('/')[2])
+                coord_by_day[day] = coord
+            except (IndexError, ValueError):
+                pass
+
+    # 月の全日数分のレスポンスを生成
+    _, num_days = cal_module.monthrange(year, month)
+    result = []
+    for day in range(1, num_days + 1):
+        if day in coord_by_day:
+            coord = coord_by_day[day]
+            result.append(CoordinateListItem(
+                year=year,
+                month=month,
+                day=day,
+                id=coord.get('id'),
+                coodinate_image_path=coord.get('coordinate_image_path')
+            ))
+        else:
+            result.append(CoordinateListItem(
+                year=year,
+                month=month,
+                day=day,
+                id=None,
+                coodinate_image_path=None
+            ))
+
+    return result
+
+
+@app.get("/api/coordinate/date/{uid}/{target_date}", response_model=List[CoordinateDetailResponse])
+async def get_coordinate_by_date(uid: str, target_date: str):
+    """
+    指定ユーザーの指定日付（YYYY-MM-DD）のコーディネート詳細を返す。
+    コーデが存在しない場合は空配列を返す。
+    """
+    firebase = FirebaseService()
+    coordinate = firebase.get_coordinate_by_date(uid, target_date)
+
+    if not coordinate:
+        return []
+
+    # Firestore の date（YYYY/MM/DD）を YYYY-MM-DD 形式に変換
+    coord_date = coordinate.get('date', '').replace('/', '-')
+
+    # embedded items 配列からレスポンス用アイテムを構築
+    items_data = coordinate.get('items', [])
+    items = [
+        CoordinateDetailItem(
+            id=item.get('id', ''),
+            coordinate_id=item.get('coordinate_id', coordinate.get('id', '')),
+            item_type=item.get('item_type', ''),
+            item_image_path=item.get('item_image_path', '')
+        )
+        for item in items_data
+    ]
+
+    response = CoordinateDetailResponse(
+        current_coordinate=CoordinateDetailCurrentCoordinate(
+            id=coordinate.get('id', ''),
+            date=coord_date,
+            coodinate_image_path=coordinate.get('coordinate_image_path', '')
+        ),
+        items=items,
+        ai_catchphrase=coordinate.get('ai_catchphrase', ''),
+        ai_review_comment=coordinate.get('ai_review_comment', '')
+    )
+
+    return [response]
