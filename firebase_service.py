@@ -729,27 +729,32 @@ class FirebaseService:
             list: List of coordinate data for the month
         """
         try:
-            # Firestore date format is YYYY/MM/DD
-            date_start = f"{year:04d}/{month:02d}/01"
-            date_end = f"{year:04d}/{month:02d}/99"  # 99 > 31 covers all days
-
+            # Get all coordinates for the user
+            # Note: Using date range query (>= and <=) requires composite index in Firestore
+            # Instead, we fetch all user coordinates and filter in memory
             docs = (
                 self.db.collection('fashion-review')
                 .where('user_id', '==', user_id)
-                .where('date', '>=', date_start)
-                .where('date', '<=', date_end)
                 .stream()
             )
 
+            # Filter by year/month in memory
+            target_prefix = f"{year:04d}/{month:02d}/"
             coordinates = []
             for doc in docs:
-                coordinates.append(doc.to_dict())
+                data = doc.to_dict()
+                date_str = data.get('date', '')
+                # Check if date starts with "YYYY/MM/"
+                if date_str.startswith(target_prefix):
+                    coordinates.append(data)
 
             print(f"[Firebase] Found {len(coordinates)} coordinates for {year}/{month:02d}")
             return coordinates
 
         except Exception as e:
             print(f"Error getting coordinates by month: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def get_coordinate_by_date(
