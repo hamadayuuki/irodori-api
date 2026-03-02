@@ -3,6 +3,8 @@ import asyncio
 import os
 import base64
 from typing import List, Optional
+from io import BytesIO
+from PIL import Image
 from google import genai
 from google.genai import types
 from models import CoordinateItem
@@ -13,6 +15,41 @@ class GeminiService:
         # Try to get API key from environment variable if not provided
         api_key = api_key or os.getenv('GOOGLE_GENAI_API_KEY')
         self.client = genai.Client(api_key=api_key) if api_key else genai.Client()
+
+    @staticmethod
+    def resize_image_base64(image_base64: str, scale: float = 0.5) -> str:
+        """
+        Resize image to reduce processing time for Gemini API.
+
+        Args:
+            image_base64: Base64 encoded image
+            scale: Scale factor (0.5 = half resolution)
+
+        Returns:
+            str: Resized image as base64
+        """
+        try:
+            # Decode base64 to image
+            image_data = base64.b64decode(image_base64)
+            image = Image.open(BytesIO(image_data))
+
+            # Calculate new size
+            new_width = int(image.width * scale)
+            new_height = int(image.height * scale)
+
+            # Resize image with high quality
+            resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+            # Convert back to base64
+            buffer = BytesIO()
+            resized_image.save(buffer, format=image.format or 'JPEG', quality=85)
+            resized_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+            print(f"[Image Resize] {image.width}x{image.height} -> {new_width}x{new_height}")
+            return resized_base64
+        except Exception as e:
+            print(f"Error resizing image: {e}, using original")
+            return image_base64
     
     def generate_recommend_reasons(self, coordinates: List[CoordinateItem]) -> str:
         """
@@ -110,8 +147,8 @@ class GeminiService:
         """
         
         try:
-            # Use provided model or default to gemini-2.5-flash
-            model_name = model if model else "gemini-2.5-flash"
+            # Use provided model or default to gemini-2.5-flash-lite
+            model_name = model if model else "gemini-2.5-flash-lite"
             response = self.client.models.generate_content(
                 model=model_name,
                 contents=prompt,
@@ -119,7 +156,8 @@ class GeminiService:
                     response_mime_type="application/json",
                     response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
                     temperature=0.7,
-                    max_output_tokens=5000
+                    max_output_tokens=3000,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0)
                 ),
             )
             
@@ -166,20 +204,20 @@ class GeminiService:
         """
         
         try:
-            # Prepare image data
-            image_data = base64.b64decode(image_base64)
-            
-            # Create content with text and image
+            # Resize image to 1/2 resolution for faster processing
+            resized_image_base64 = self.resize_image_base64(image_base64, scale=0.5)
+
+            # Create content with text and resized image
             content = [
                 {"text": prompt},
                 {"inline_data": {
                     "mime_type": "image/jpeg",
-                    "data": image_base64
+                    "data": resized_image_base64
                 }}
             ]
-            
-            # Use provided model or default to gemini-2.5-flash
-            model_name = model if model else "gemini-2.5-flash"
+
+            # Use provided model or default to gemini-2.5-flash-lite
+            model_name = model if model else "gemini-2.5-flash-lite"
             response = self.client.models.generate_content(
                 model=model_name,
                 contents=content,
@@ -187,7 +225,8 @@ class GeminiService:
                     response_mime_type="application/json",
                     response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
                     temperature=0.7,
-                    max_output_tokens=6000
+                    max_output_tokens=3000,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0)
                 ),
             )
             
@@ -223,6 +262,9 @@ class GeminiService:
                 "items": list (detailed item information)
             }
         """
+        # Resize image to 1/2 resolution for faster processing
+        resized_image_base64 = self.resize_image_base64(image_base64, scale=0.5)
+
         with open("prompt/coordinate-review.txt", "r", encoding="utf-8") as f:
             base_prompt = f.read()
 
@@ -247,15 +289,13 @@ class GeminiService:
 """
 
         try:
-            # Prepare image data
-            image_data = base64.b64decode(image_base64)
 
-            # Create content with text and image
+            # Create content with text and resized image
             content = [
                 {"text": enhanced_prompt},
                 {"inline_data": {
                     "mime_type": "image/jpeg",
-                    "data": image_base64
+                    "data": resized_image_base64
                 }}
             ]
 
@@ -301,7 +341,8 @@ class GeminiService:
                     response_mime_type="application/json",
                     response_schema=response_schema,
                     temperature=0.7,
-                    max_output_tokens=10000
+                    max_output_tokens=3000,  # Reduced from 10000 for faster processing
+                    thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disable thinking for speed
                 ),
             )
 
@@ -350,6 +391,9 @@ class GeminiService:
                 - color: Primary color of the item
                 - description: Generated tags based on color and type
         """
+        # Resize image to 1/2 resolution for faster processing
+        resized_image_base64 = self.resize_image_base64(image_base64, scale=0.5)
+
         # Response schema definition
         response_schema = {
             "type": "object",
@@ -397,23 +441,24 @@ class GeminiService:
         """
 
         try:
-            # Create content with text and image
+            # Create content with text and resized image
             content = [
                 {"text": prompt},
                 {"inline_data": {
                     "mime_type": "image/jpeg",
-                    "data": image_base64
+                    "data": resized_image_base64
                 }}
             ]
 
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-flash-lite",
                 contents=content,
                 config=types.GenerateContentConfig(
                     temperature=0.4,
                     response_mime_type="application/json",
                     response_schema=response_schema,
-                    max_output_tokens=2000
+                    max_output_tokens=2000,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0)
                 ),
             )
 
