@@ -295,7 +295,7 @@ class GeminiService:
             }
 
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-flash-lite",
                 contents=content,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
