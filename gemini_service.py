@@ -246,111 +246,229 @@ class GeminiService:
         else:
             return await loop.run_in_executor(None, self.chat_coordinate_advice, question, gender, model)
 
-    def generate_fashion_review(self, image_base64: str) -> dict:
+    def _generate_review_parallel(self, resized_image_base64: str) -> dict:
         """
-        Generate comprehensive fashion review and extract items from full-body image using Gemini API.
-
-        Args:
-            image_base64: Base64 encoded full-body image
+        並列処理用: レビューとキャッチフレーズを生成
 
         Returns:
-            dict: {
-                "ai_catchphrase": str (20-30 characters, catchy phrase),
-                "ai_review_comment": str (100-200 characters, detailed review),
-                "tags": list (3-5 tags describing the style),
-                "item_types": list (list of found item types, e.g., ["アウター", "トップス", "ボトムス"]),
-                "items": list (detailed item information)
-            }
+            dict: {"ai_catchphrase": str, "ai_review_comment": str}
         """
-        # Resize image to 30% resolution for faster processing
-        resized_image_base64 = self.resize_image_base64(image_base64, scale=0.3)
+        prompt = """プロのスタイリストとしてコーディネート画像を分析し、以下を生成してください。
 
-        with open("prompt/coordinate-review.txt", "r", encoding="utf-8") as f:
-            prompt = f.read()
+# 出力内容
+- ai_catchphrase: 20字程度の面白い比喩表現（#なし）
+- ai_review_comment: 250字以内のコーデ解説（シルエット・色・季節感を簡潔に。段落分けは**太文字**で強調）
+
+# 注意
+簡潔に回答し、処理時間を短縮してください。ユーモアと個性を大切に。"""
 
         try:
-            # Create content with text and resized image
             content = [
                 {"text": prompt},
-                {"inline_data": {
-                    "mime_type": "image/jpeg",
-                    "data": resized_image_base64
-                }}
+                {"inline_data": {"mime_type": "image/jpeg", "data": resized_image_base64}}
             ]
-
-            # Enhanced response schema with items
-            response_schema = {
-                "type": "object",
-                "properties": {
-                    "ai_catchphrase": {"type": "string"},
-                    "ai_review_comment": {"type": "string"},
-                    "tags": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
-                    "item_types": {
-                        "type": "array",
-                        "items": {"type": "string"}
-                    },
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "item_type": {
-                                    "type": "string",
-                                    "enum": ["アウター", "トップス", "ボトムス", "シューズ", "アクセサリー"]
-                                },
-                                "category": {"type": "string"},
-                                "color": {"type": "string"},
-                                "description": {"type": "string"}
-                            },
-                            "required": ["item_type", "category", "color", "description"]
-                        }
-                    }
-                },
-                "required": ["ai_catchphrase", "ai_review_comment", "tags", "item_types", "items"]
-            }
 
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash-lite",
                 contents=content,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    response_schema=response_schema,
-                    temperature=0.5,  # Lower temperature for faster, more deterministic responses
-                    max_output_tokens=1500,  # Reduced for faster processing
+                    response_schema={
+                        "type": "object",
+                        "properties": {
+                            "ai_catchphrase": {"type": "string"},
+                            "ai_review_comment": {"type": "string"}
+                        },
+                        "required": ["ai_catchphrase", "ai_review_comment"]
+                    },
+                    temperature=0.5,
+                    max_output_tokens=500,
                     thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
                 ),
             )
 
-            # テキストをJSONとして読み込む (確実な方法)
-            try:
-                result = json.loads(response.text)
-                print(f"[Gemini] Fashion review generated with {len(result.get('items', []))} items")
-                return result
-            except json.JSONDecodeError:
-                # 万が一JSON化に失敗した場合のフェイルセーフ
-                return {
-                    "ai_catchphrase": "生成エラー",
-                    "ai_review_comment": "解析できませんでした",
-                    "tags": [],
-                    "item_types": [],
-                    "items": []
-                }
+            return json.loads(response.text)
         except Exception as e:
-            print(f"Error in generate_fashion_review: {e}")
+            print(f"[Parallel 1] Error generating review: {e}")
             return {
-                "ai_catchphrase": "素敵なコーディネートです！",
-                "ai_review_comment": "バランスの取れた素敵なコーディネートだと思います。様々なシーンで活躍しそうですね。",
-                "tags": ["カジュアル"],
-                "item_types": [],
-                "items": []
+                "ai_catchphrase": "素敵なコーディネート",
+                "ai_review_comment": "バランスの取れた素敵なコーディネートです。"
             }
+
+    def _generate_tags_parallel(self, resized_image_base64: str) -> dict:
+        """
+        並列処理用: タグを生成
+
+        Returns:
+            dict: {"tags": list}
+        """
+        prompt = """プロのスタイリストとしてコーディネート画像を分析し、タグを生成してください。
+
+# 出力内容
+- tags: 7つのタグ
+  1. テイスト（例: カジュアル、フォーマル）
+  2. ユーモアのある比喩表現（例: 都会の風を纏う旅人）
+  3. 特徴（例: モノトーン、レイヤード）
+  4. 印象（例: スマート、リラックス）
+  5. シーン（例: デート、オフィス）
+  6. トップスの色と種類（例: 白 Tシャツ）
+  7. ボトムスの色と種類（例: 黒 スキニーパンツ）
+
+# 注意
+簡潔に。ユーモアと個性を。"""
+
+        try:
+            content = [
+                {"text": prompt},
+                {"inline_data": {"mime_type": "image/jpeg", "data": resized_image_base64}}
+            ]
+
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                contents=content,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={
+                        "type": "object",
+                        "properties": {
+                            "tags": {"type": "array", "items": {"type": "string"}}
+                        },
+                        "required": ["tags"]
+                    },
+                    temperature=0.7,
+                    max_output_tokens=300,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
+                ),
+            )
+
+            return json.loads(response.text)
+        except Exception as e:
+            print(f"[Parallel 2] Error generating tags: {e}")
+            return {"tags": ["カジュアル", "シンプル", "ベーシック", "ナチュラル", "デイリー", "トップス", "ボトムス"]}
+
+    def _extract_items_parallel(self, resized_image_base64: str) -> dict:
+        """
+        並列処理用: アイテムを抽出
+
+        Returns:
+            dict: {"items": list, "item_types": list}
+        """
+        prompt = """コーディネート画像から視認できる主要なアイテムを抽出してください。
+
+# 抽出内容
+- item_type: アウター/トップス/ボトムス/シューズ/アクセサリー
+- category: 具体的な種類（例: Tシャツ、ジーンズ）
+- color: 色
+- description: 色と種類の組み合わせ（例: 白 Tシャツ）
+
+# item_types
+抽出したitem_typeのリスト
+
+# 注意
+明確に識別できるアイテムのみ（最大5個）。簡潔に。"""
+
+        try:
+            content = [
+                {"text": prompt},
+                {"inline_data": {"mime_type": "image/jpeg", "data": resized_image_base64}}
+            ]
+
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                contents=content,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={
+                        "type": "object",
+                        "properties": {
+                            "item_types": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "item_type": {
+                                            "type": "string",
+                                            "enum": ["アウター", "トップス", "ボトムス", "シューズ", "アクセサリー"]
+                                        },
+                                        "category": {"type": "string"},
+                                        "color": {"type": "string"},
+                                        "description": {"type": "string"}
+                                    },
+                                    "required": ["item_type", "category", "color", "description"]
+                                }
+                            }
+                        },
+                        "required": ["items", "item_types"]
+                    },
+                    temperature=0.4,
+                    max_output_tokens=700,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
+                ),
+            )
+
+            return json.loads(response.text)
+        except Exception as e:
+            print(f"[Parallel 3] Error extracting items: {e}")
+            return {"items": [], "item_types": []}
+
+    def generate_fashion_review(self, image_base64: str) -> dict:
+        """
+        Generate comprehensive fashion review and extract items from full-body image using Gemini API.
+        Uses parallel requests to improve response time.
+
+        Args:
+            image_base64: Base64 encoded full-body image
+
+        Returns:
+            dict: {
+                "ai_catchphrase": str,
+                "ai_review_comment": str,
+                "tags": list,
+                "item_types": list,
+                "items": list
+            }
+        """
+        import time
+        start_time = time.time()
+
+        # Resize image to 30% resolution for faster processing
+        resized_image_base64 = self.resize_image_base64(image_base64, scale=0.3)
+
+        # Execute 3 parallel requests using ThreadPoolExecutor
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit all 3 requests in parallel
+            future_review = executor.submit(self._generate_review_parallel, resized_image_base64)
+            future_tags = executor.submit(self._generate_tags_parallel, resized_image_base64)
+            future_items = executor.submit(self._extract_items_parallel, resized_image_base64)
+
+            # Wait for all results
+            review_result = future_review.result()
+            tags_result = future_tags.result()
+            items_result = future_items.result()
+
+        # Merge results
+        result = {
+            "ai_catchphrase": review_result.get("ai_catchphrase", ""),
+            "ai_review_comment": review_result.get("ai_review_comment", ""),
+            "tags": tags_result.get("tags", []),
+            "item_types": items_result.get("item_types", []),
+            "items": items_result.get("items", [])
+        }
+
+        elapsed_time = time.time() - start_time
+        print(f"[Gemini Parallel] Fashion review completed in {elapsed_time:.2f}s with {len(result.get('items', []))} items")
+
+        return result
 
     async def generate_fashion_review_async(self, image_base64: str) -> dict:
         """
-        Async version of generate_fashion_review.
+        Async version of generate_fashion_review with parallel processing.
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.generate_fashion_review, image_base64)
