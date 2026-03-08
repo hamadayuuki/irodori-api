@@ -87,7 +87,7 @@ class GeminiService:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema={"type": "object", "properties": {"recommend_reasons": {"type": "string"}}},
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
                 ),
             )
             
@@ -157,7 +157,7 @@ class GeminiService:
                     response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
                     temperature=0.7,
                     max_output_tokens=3000,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
                 ),
             )
             
@@ -226,7 +226,7 @@ class GeminiService:
                     response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
                     temperature=0.7,
                     max_output_tokens=3000,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
                 ),
             )
             
@@ -320,7 +320,7 @@ class GeminiService:
                     response_schema=response_schema,
                     temperature=0.5,  # Lower temperature for faster, more deterministic responses
                     max_output_tokens=1500,  # Reduced for faster processing
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disable thinking for speed
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
                 ),
             )
 
@@ -436,7 +436,7 @@ class GeminiService:
                     response_mime_type="application/json",
                     response_schema=response_schema,
                     max_output_tokens=2000,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
                 ),
             )
 
@@ -521,7 +521,7 @@ class GeminiService:
                     },
                     temperature=0.7,
                     max_output_tokens=500,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
                 ),
             )
 
