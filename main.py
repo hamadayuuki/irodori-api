@@ -436,6 +436,20 @@ async def chat_test_page():
             status_code=404
         )
 
+@app.get("/fashion-review-test", response_class=HTMLResponse)
+async def fashion_review_test_page():
+    """
+    Fashion review functionality test page
+    """
+    try:
+        with open("static/fashion-review-test.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>Error: Test page not found</h1>",
+            status_code=404
+        )
+
 @app.get("/health/chat")
 async def health_chat():
     try:

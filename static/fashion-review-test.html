@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fashion Review Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .required {
+            color: #e53e3e;
+            margin-left: 4px;
+        }
+
+        .optional {
+            color: #718096;
+            font-size: 12px;
+            font-weight: normal;
+            margin-left: 4px;
+        }
+
+        .file-preview {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .file-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .result h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .result-section {
+            margin-bottom: 20px;
+        }
+
+        .result-section h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+
+        .result-section p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #2d3748;
+            white-space: pre-wrap;
+        }
+
+        .coordinate-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 16px;
+            font-size: 12px;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .item-card {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .item-card h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .item-card p {
+            font-size: 12px;
+            color: #718096;
+            margin: 4px 0;
+        }
+
+        .error {
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .error h3 {
+            color: #e53e3e;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .error p {
+            color: #742a2a;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fashion Review Test</h1>
+            <p>/api/fashion_review エンドポイントのテストページ</p>
+        </div>
+
+        <div class="content">
+            <form id="fashionReviewForm">
+                <div class="form-group">
+                    <label for="userId">
+                        User ID <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="userId"
+                        name="user_id"
+                        placeholder="test-user-id"
+                        value="test-user-id"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="userToken">
+                        User Token <span class="required">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="userToken"
+                        name="user_token"
+                        placeholder="test-token-12345"
+                        value="test-token-12345"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="coordinateImage">
+                        コーディネート画像（全身） <span class="required">*</span>
+                    </label>
+                    <input
+                        type="file"
+                        id="coordinateImage"
+                        name="file"
+                        accept="image/*"
+                        required
+                    >
+                    <div id="coordinatePreview" class="file-preview"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="topsImage">
+                        トップス画像 <span class="optional">(オプション)</span>
+                    </label>
+                    <input
+                        type="file"
+                        id="topsImage"
+                        name="tops_image"
+                        accept="image/*"
+                    >
+                    <div id="topsPreview" class="file-preview"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="bottomsImage">
+                        ボトムス画像 <span class="optional">(オプション)</span>
+                    </label>
+                    <input
+                        type="file"
+                        id="bottomsImage"
+                        name="bottoms_image"
+                        accept="image/*"
+                    >
+                    <div id="bottomsPreview" class="file-preview"></div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    レビューを取得
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>AIがファッションをレビュー中...</p>
+            </div>
+
+            <div class="error" id="error">
+                <h3>エラーが発生しました</h3>
+                <p id="errorMessage"></p>
+            </div>
+
+            <div class="result" id="result">
+                <h2>レビュー結果</h2>
+
+                <div class="result-section">
+                    <h3>現在のコーディネート</h3>
+                    <p><strong>ID:</strong> <span id="coordId"></span></p>
+                    <p><strong>日付:</strong> <span id="coordDate"></span></p>
+                    <img id="coordImage" class="coordinate-image" style="display: none;">
+                </div>
+
+                <div class="result-section">
+                    <h3>AIキャッチフレーズ</h3>
+                    <p id="catchphrase"></p>
+                </div>
+
+                <div class="result-section">
+                    <h3>AIレビュー</h3>
+                    <p id="reviewComment"></p>
+                </div>
+
+                <div class="result-section">
+                    <h3>タグ</h3>
+                    <div id="tags" class="tags"></div>
+                </div>
+
+                <div class="result-section">
+                    <h3>アイテムタイプ</h3>
+                    <div id="itemTypes" class="tags"></div>
+                </div>
+
+                <div class="result-section">
+                    <h3>抽出されたアイテム</h3>
+                    <div id="items" class="items-grid"></div>
+                </div>
+
+                <div class="result-section">
+                    <h3>最近のコーディネート</h3>
+                    <p id="recentCount"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Preview images when selected
+        function setupImagePreview(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+
+            input.addEventListener('change', function(e) {
+                preview.innerHTML = '';
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        setupImagePreview('coordinateImage', 'coordinatePreview');
+        setupImagePreview('topsImage', 'topsPreview');
+        setupImagePreview('bottomsImage', 'bottomsPreview');
+
+        // Form submission
+        document.getElementById('fashionReviewForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+
+            // Reset UI
+            result.classList.remove('active');
+            error.classList.remove('active');
+            loading.classList.add('active');
+            submitBtn.disabled = true;
+
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('user_id', document.getElementById('userId').value);
+                formData.append('user_token', document.getElementById('userToken').value);
+
+                const coordinateFile = document.getElementById('coordinateImage').files[0];
+                if (!coordinateFile) {
+                    throw new Error('コーディネート画像を選択してください');
+                }
+                formData.append('file', coordinateFile);
+
+                // Optional images
+                const topsFile = document.getElementById('topsImage').files[0];
+                if (topsFile) {
+                    formData.append('tops_image', topsFile);
+                }
+
+                const bottomsFile = document.getElementById('bottomsImage').files[0];
+                if (bottomsFile) {
+                    formData.append('bottoms_image', bottomsFile);
+                }
+
+                // Send request
+                const response = await fetch('/api/fashion_review', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'リクエストが失敗しました');
+                }
+
+                const data = await response.json();
+
+                // Display results
+                displayResults(data);
+
+            } catch (err) {
+                console.error('Error:', err);
+                error.classList.add('active');
+                document.getElementById('errorMessage').textContent = err.message;
+            } finally {
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            const result = document.getElementById('result');
+            result.classList.add('active');
+
+            // Current coordinate
+            document.getElementById('coordId').textContent = data.current_coordinate.id;
+            document.getElementById('coordDate').textContent = data.current_coordinate.date;
+
+            const coordImage = document.getElementById('coordImage');
+            if (data.current_coordinate.coodinate_image_path) {
+                coordImage.src = data.current_coordinate.coodinate_image_path;
+                coordImage.style.display = 'block';
+            }
+
+            // AI catchphrase and review
+            document.getElementById('catchphrase').textContent = data.ai_catchphrase;
+            document.getElementById('reviewComment').textContent = data.ai_review_comment;
+
+            // Tags
+            const tagsContainer = document.getElementById('tags');
+            tagsContainer.innerHTML = '';
+            data.tags.forEach(tag => {
+                const tagEl = document.createElement('span');
+                tagEl.className = 'tag';
+                tagEl.textContent = tag;
+                tagsContainer.appendChild(tagEl);
+            });
+
+            // Item types
+            const itemTypesContainer = document.getElementById('itemTypes');
+            itemTypesContainer.innerHTML = '';
+            data.item_types.forEach(type => {
+                const typeEl = document.createElement('span');
+                typeEl.className = 'tag';
+                typeEl.textContent = type;
+                itemTypesContainer.appendChild(typeEl);
+            });
+
+            // Items
+            const itemsContainer = document.getElementById('items');
+            itemsContainer.innerHTML = '';
+            data.items.forEach(item => {
+                const itemCard = document.createElement('div');
+                itemCard.className = 'item-card';
+                itemCard.innerHTML = `
+                    <h4>${item.item_type || 'アイテム'}</h4>
+                    <p><strong>カテゴリ:</strong> ${item.category || 'なし'}</p>
+                    <p><strong>色:</strong> ${item.color || 'なし'}</p>
+                    <p><strong>説明:</strong> ${item.description || 'なし'}</p>
+                    ${item.item_image_path ? `<img src="${item.item_image_path}" style="width: 100%; margin-top: 8px; border-radius: 4px;">` : ''}
+                `;
+                itemsContainer.appendChild(itemCard);
+            });
+
+            // Recent coordinates
+            document.getElementById('recentCount').textContent =
+                `${data.recent_coordinates.length}件の最近のコーディネートが見つかりました`;
+        }
+    </script>
+</body>
+</html>
