@@ -6,6 +6,7 @@ import urllib
 import urllib.parse
 import random
 from datetime import datetime
+import asyncio
 
 from pydantic import BaseModel
 import requests
@@ -899,6 +900,9 @@ async def fashion_review(
     Returns:
         FashionReviewResponse: Contains current coordinate, recent coordinates, items, AI review, and tags
     """
+    import time
+    request_start_time = time.time()
+
     try:
         # Validate file type
         if not file.content_type or not file.content_type.startswith('image/'):
@@ -917,32 +921,66 @@ async def fashion_review(
         gemini_service = GeminiService()
         firebase_service = FirebaseService()
 
-        # Generate AI review and extract items using Gemini (single API call)
+        # Generate AI review and extract items using Gemini (parallel API calls)
         print(f"Generating fashion review and extracting items for user: {user_id}")
         ai_review = await gemini_service.generate_fashion_review_async(image_base64)
 
-        # Upload image to Firebase Storage
-        print("Uploading image to Firebase Storage...")
-        coordinate_image_url = firebase_service.upload_image(image_data, folder=f"coordinates/{user_id}")
+        # Prepare image upload tasks (parallel execution)
+        upload_start_time = time.time()
+        print("Uploading images to Firebase Storage in parallel...")
 
-        # Upload individual item images if provided
-        tops_image_url = None
-        bottoms_image_url = None
+        # Validate and read optional images first
+        tops_image_data = None
+        bottoms_image_data = None
 
         if tops_image:
-            # Validate file type
             if not tops_image.content_type or not tops_image.content_type.startswith('image/'):
                 raise HTTPException(status_code=400, detail="Invalid tops_image file type")
             tops_image_data = await tops_image.read()
-            tops_image_url = firebase_service.upload_image(tops_image_data, folder=f"items/{user_id}/tops")
-            print(f"Uploaded tops_image: {tops_image_url}")
 
         if bottoms_image:
-            # Validate file type
             if not bottoms_image.content_type or not bottoms_image.content_type.startswith('image/'):
                 raise HTTPException(status_code=400, detail="Invalid bottoms_image file type")
             bottoms_image_data = await bottoms_image.read()
-            bottoms_image_url = firebase_service.upload_image(bottoms_image_data, folder=f"items/{user_id}/bottoms")
+
+        # Build parallel upload tasks
+        upload_tasks = {
+            'coordinate': asyncio.to_thread(
+                firebase_service.upload_image,
+                image_data,
+                f"coordinates/{user_id}"
+            )
+        }
+
+        if tops_image_data:
+            upload_tasks['tops'] = asyncio.to_thread(
+                firebase_service.upload_image,
+                tops_image_data,
+                f"items/{user_id}/tops"
+            )
+
+        if bottoms_image_data:
+            upload_tasks['bottoms'] = asyncio.to_thread(
+                firebase_service.upload_image,
+                bottoms_image_data,
+                f"items/{user_id}/bottoms"
+            )
+
+        # Execute all uploads in parallel
+        upload_results = await asyncio.gather(*upload_tasks.values())
+
+        # Map results back to named variables
+        result_keys = list(upload_tasks.keys())
+        coordinate_image_url = upload_results[result_keys.index('coordinate')]
+        tops_image_url = upload_results[result_keys.index('tops')] if 'tops' in result_keys else None
+        bottoms_image_url = upload_results[result_keys.index('bottoms')] if 'bottoms' in result_keys else None
+
+        upload_elapsed_time = time.time() - upload_start_time
+        print(f"[Parallel Upload] Completed in {upload_elapsed_time:.2f}s")
+        print(f"Uploaded coordinate_image: {coordinate_image_url}")
+        if tops_image_url:
+            print(f"Uploaded tops_image: {tops_image_url}")
+        if bottoms_image_url:
             print(f"Uploaded bottoms_image: {bottoms_image_url}")
 
         # Generate unique coordinate ID
@@ -1084,7 +1122,8 @@ async def fashion_review(
             item_types=ai_review.get("item_types", [])
         )
 
-        print(f"Fashion review completed successfully for user: {user_id}")
+        request_elapsed_time = time.time() - request_start_time
+        print(f"[Total Request] Fashion review completed in {request_elapsed_time:.2f}s for user: {user_id}")
         return response
 
     except HTTPException:
