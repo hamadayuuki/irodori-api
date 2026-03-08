@@ -20,7 +20,7 @@ from models import (
     FashionReviewItem, CoordinateRecommendRequest, HomeResponse, HomeRecentCoordinate,
     ClosetItem, ClosetResponse, AnalyzeRecentCoordinateRequest, AnalyzeRecentCoordinateResponse,
     CoordinateListItem, CoordinateDetailCurrentCoordinate, CoordinateDetailItem,
-    CoordinateDetailResponse
+    CoordinateDetailResponse, GeminiTestRequest, GeminiTestResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -449,6 +449,42 @@ async def fashion_review_test_page():
             content="<h1>Error: Test page not found</h1>",
             status_code=404
         )
+
+@app.get("/gemini-test", response_class=HTMLResponse)
+async def gemini_test_page():
+    """
+    Gemini model test page
+    """
+    try:
+        with open("static/gemini-test.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>Error: Test page not found</h1>",
+            status_code=404
+        )
+
+@app.post("/api/gemini-test", response_model=GeminiTestResponse)
+async def gemini_test(request: GeminiTestRequest):
+    """
+    Test Gemini API with different models and prompts.
+    Measures response time from client side.
+
+    Args:
+        request: GeminiTestRequest containing model and prompt
+
+    Returns:
+        GeminiTestResponse: Contains the response from Gemini
+    """
+    try:
+        gemini_service = GeminiService()
+        response = await gemini_service.test_gemini_async(request.prompt, request.model)
+        return GeminiTestResponse(response=response)
+    except Exception as e:
+        print(f"Error in gemini_test endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.get("/health/chat")
 async def health_chat():

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Model Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .metrics {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            flex: 1;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .metric-unit {
+            font-size: 14px;
+            color: #718096;
+            margin-left: 2px;
+        }
+
+        .response-box {
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .response-box h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .response-content {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #2d3748;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error {
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .error h3 {
+            color: #e53e3e;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .error p {
+            color: #742a2a;
+            font-size: 14px;
+        }
+
+        .model-info {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gemini Model Test</h1>
+            <p>異なるGeminiモデルのレスポンス速度と品質をテスト</p>
+        </div>
+
+        <div class="content">
+            <form id="geminiTestForm">
+                <div class="form-group">
+                    <label for="model">
+                        Gemini Model
+                    </label>
+                    <select id="model" name="model" required>
+                        <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (速い・軽量)</option>
+                        <option value="gemini-3.1-flash-lite-preview" selected>gemini-3.1-flash-lite-preview (最新・推奨)</option>
+                        <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp (実験的)</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash (安定版)</option>
+                        <option value="gemini-1.5-pro">gemini-1.5-pro (高品質・遅い)</option>
+                    </select>
+                    <div class="model-info" id="modelInfo">
+                        最新かつ高速なモデル。推論時間が短く、品質も優れています。
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prompt">
+                        プロンプト
+                    </label>
+                    <textarea
+                        id="prompt"
+                        name="prompt"
+                        placeholder="こんにちは"
+                        required
+                    >こんにちは</textarea>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    送信
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Gemini AI処理中...</p>
+            </div>
+
+            <div class="error" id="error">
+                <h3>エラーが発生しました</h3>
+                <p id="errorMessage"></p>
+            </div>
+
+            <div class="result" id="result">
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">処理時間</div>
+                        <div class="metric-value">
+                            <span id="processingTime">0</span>
+                            <span class="metric-unit">秒</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">使用モデル</div>
+                        <div class="metric-value" style="font-size: 16px;" id="usedModel">-</div>
+                    </div>
+                </div>
+
+                <div class="response-box">
+                    <h3>レスポンス</h3>
+                    <div class="response-content" id="responseContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Model descriptions
+        const modelDescriptions = {
+            "gemini-2.5-flash-lite": "高速で軽量なモデル。短い応答に最適。",
+            "gemini-3.1-flash-lite-preview": "最新かつ高速なモデル。推論時間が短く、品質も優れています。",
+            "gemini-2.0-flash-exp": "実験的な機能を含むモデル。最新技術を試せます。",
+            "gemini-1.5-flash": "安定版の高速モデル。バランスが良い。",
+            "gemini-1.5-pro": "高品質だが処理時間が長い。複雑なタスク向け。"
+        };
+
+        // Update model info when selection changes
+        document.getElementById('model').addEventListener('change', function(e) {
+            const modelInfo = document.getElementById('modelInfo');
+            modelInfo.textContent = modelDescriptions[e.target.value] || '';
+        });
+
+        // Form submission
+        document.getElementById('geminiTestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+
+            // Reset UI
+            result.classList.remove('active');
+            error.classList.remove('active');
+            loading.classList.add('active');
+            submitBtn.disabled = true;
+
+            const model = document.getElementById('model').value;
+            const prompt = document.getElementById('prompt').value;
+
+            // Start timer
+            const startTime = performance.now();
+
+            try {
+                // Send request
+                const response = await fetch('/api/gemini-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        prompt: prompt
+                    })
+                });
+
+                // Calculate processing time
+                const endTime = performance.now();
+                const processingTime = ((endTime - startTime) / 1000).toFixed(2);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'リクエストが失敗しました');
+                }
+
+                const data = await response.json();
+
+                // Display results
+                displayResults(data, processingTime, model);
+
+            } catch (err) {
+                console.error('Error:', err);
+                error.classList.add('active');
+                document.getElementById('errorMessage').textContent = err.message;
+            } finally {
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data, processingTime, model) {
+            const result = document.getElementById('result');
+            result.classList.add('active');
+
+            // Display metrics
+            document.getElementById('processingTime').textContent = processingTime;
+            document.getElementById('usedModel').textContent = model.replace('gemini-', '').replace('-preview', '');
+
+            // Display response
+            document.getElementById('responseContent').textContent = data.response;
+        }
+    </script>
+</body>
+</html>

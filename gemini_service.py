@@ -313,7 +313,7 @@ class GeminiService:
             }
 
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash-lite",
+                model="gemini-3.1-flash-lite-preview",
                 contents=content,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -537,3 +537,38 @@ class GeminiService:
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.analyze_recent_coordinates, tags_list)
+
+    def test_gemini(self, prompt: str, model: str = "gemini-3.1-flash-lite-preview") -> str:
+        """
+        Simple Gemini API test with customizable model and prompt.
+
+        Args:
+            prompt: The prompt to send to Gemini
+            model: The Gemini model to use
+
+        Returns:
+            str: Gemini's response
+        """
+        try:
+            response = self.client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                    max_output_tokens=500,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
+                ),
+            )
+
+            return response.text
+
+        except Exception as e:
+            print(f"Error in test_gemini: {e}")
+            return f"エラーが発生しました: {str(e)}"
+
+    async def test_gemini_async(self, prompt: str, model: str = "gemini-3.1-flash-lite-preview") -> str:
+        """
+        Async version of test_gemini.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.test_gemini, prompt, model)

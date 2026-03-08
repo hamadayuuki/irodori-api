@@ -185,3 +185,13 @@ class CoordinateDetailResponse(BaseModel):
     items: List[CoordinateDetailItem]
     ai_catchphrase: str
     ai_review_comment: str
+
+
+# Gemini Test Models
+class GeminiTestRequest(BaseModel):
+    model: str
+    prompt: str
+
+
+class GeminiTestResponse(BaseModel):
+    response: str
