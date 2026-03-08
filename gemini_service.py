@@ -262,37 +262,16 @@ class GeminiService:
                 "items": list (detailed item information)
             }
         """
-        # Resize image to 1/2 resolution for faster processing
-        resized_image_base64 = self.resize_image_base64(image_base64, scale=0.5)
+        # Resize image to 30% resolution for faster processing
+        resized_image_base64 = self.resize_image_base64(image_base64, scale=0.3)
 
         with open("prompt/coordinate-review.txt", "r", encoding="utf-8") as f:
-            base_prompt = f.read()
-
-        # Add item extraction instructions to the prompt
-        enhanced_prompt = base_prompt + """
-
-また、画像内のファッションアイテムも抽出してください。
-
-**アイテム抽出の指示:**
-- コーディネート画像から視認できる主要なアイテムを抽出してください
-- 各アイテムについて、種類(item_type)、カテゴリ(category)、色(color)、説明(description)を出力してください
-- 'description' は色と種類からタグを生成してください（例: 黒 レザー ライダースジャケット）
-- ハッシュタグ記号（#）は含めないでください
-- 明確に識別できるアイテムのみを出力してください（最大5個程度）
-
-**item_typeの選択基準:**
-- アウター: ジャケット、コート、ブルゾンなど
-- トップス: シャツ、Tシャツ、ニット、パーカーなど
-- ボトムス: パンツ、スカート、ショーツなど
-- シューズ: スニーカー、ブーツ、革靴など
-- アクセサリー: 帽子、バッグ、時計、サングラスなど
-"""
+            prompt = f.read()
 
         try:
-
             # Create content with text and resized image
             content = [
-                {"text": enhanced_prompt},
+                {"text": prompt},
                 {"inline_data": {
                     "mime_type": "image/jpeg",
                     "data": resized_image_base64
@@ -311,8 +290,7 @@ class GeminiService:
                     },
                     "item_types": {
                         "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of found item types (e.g., ['アウター', 'トップス', 'ボトムス'])"
+                        "items": {"type": "string"}
                     },
                     "items": {
                         "type": "array",
@@ -340,8 +318,8 @@ class GeminiService:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=response_schema,
-                    temperature=0.7,
-                    max_output_tokens=3000,  # Reduced from 10000 for faster processing
+                    temperature=0.5,  # Lower temperature for faster, more deterministic responses
+                    max_output_tokens=1500,  # Reduced for faster processing
                     thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disable thinking for speed
                 ),
             )
