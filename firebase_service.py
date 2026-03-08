@@ -792,3 +792,133 @@ class FirebaseService:
         except Exception as e:
             print(f"Error getting coordinate by date: {e}")
             return None
+
+    def delete_image_from_url(self, image_url: str) -> bool:
+        """
+        Delete image from Firebase Storage using its URL.
+
+        Args:
+            image_url: Full Firebase Storage URL
+
+        Returns:
+            bool: True if deleted successfully, False otherwise
+        """
+        try:
+            if not image_url:
+                return False
+
+            # Extract path from URL
+            # URL format: https://storage.googleapis.com/{bucket}/o/{encoded_path}?...
+            # or https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{encoded_path}?...
+            import urllib.parse
+
+            if 'storage.googleapis.com' in image_url or 'firebasestorage.googleapis.com' in image_url:
+                # Extract the path from URL
+                parts = image_url.split('/o/')
+                if len(parts) > 1:
+                    # Get the encoded path and decode it
+                    encoded_path = parts[1].split('?')[0]
+                    file_path = urllib.parse.unquote(encoded_path)
+
+                    # Delete from Storage
+                    blob = self.bucket.blob(file_path)
+                    if blob.exists():
+                        blob.delete()
+                        print(f"[Storage] Deleted image: {file_path}")
+                        return True
+                    else:
+                        print(f"[Storage] Image not found: {file_path}")
+                        return False
+
+            return False
+
+        except Exception as e:
+            print(f"Error deleting image from URL {image_url}: {e}")
+            return False
+
+    def delete_coordinate(self, user_id: str, coordinate_id: str) -> dict:
+        """
+        Delete coordinate and related items from Firestore and Storage.
+
+        Args:
+            user_id: User ID
+            coordinate_id: Coordinate ID to delete
+
+        Returns:
+            dict: {
+                "success": bool,
+                "message": str,
+                "deleted_items_count": int
+            }
+        """
+        try:
+            # Get coordinate data before deleting
+            coordinate_ref = self.db.collection('fashion-review').document(coordinate_id)
+            coordinate_doc = coordinate_ref.get()
+
+            if not coordinate_doc.exists:
+                return {
+                    "success": False,
+                    "message": f"Coordinate {coordinate_id} not found",
+                    "deleted_items_count": 0
+                }
+
+            coordinate_data = coordinate_doc.to_dict()
+
+            # Verify user_id matches
+            if coordinate_data.get('user_id') != user_id:
+                return {
+                    "success": False,
+                    "message": "Unauthorized: User ID does not match",
+                    "deleted_items_count": 0
+                }
+
+            # Delete coordinate image from Storage
+            coordinate_image_path = coordinate_data.get('coordinate_image_path')
+            if coordinate_image_path:
+                self.delete_image_from_url(coordinate_image_path)
+
+            # Get embedded items for image deletion
+            embedded_items = coordinate_data.get('items', [])
+            for item in embedded_items:
+                item_image_path = item.get('item_image_path')
+                if item_image_path:
+                    self.delete_image_from_url(item_image_path)
+
+            # Delete items from user's closet (users/{user_id}/items)
+            items_ref = self.db.collection('users').document(user_id).collection('items')
+            items_query = items_ref.where('coordinate_id', '==', coordinate_id).stream()
+
+            deleted_items_count = 0
+            for item_doc in items_query:
+                item_data = item_doc.to_dict()
+
+                # Delete item image from Storage if different from coordinate image
+                item_image_url = item_data.get('image_url')
+                if item_image_url and item_image_url != coordinate_image_path:
+                    self.delete_image_from_url(item_image_url)
+
+                # Delete item document
+                item_doc.reference.delete()
+                deleted_items_count += 1
+                print(f"[Firestore] Deleted item: {item_doc.id}")
+
+            # Delete coordinate from Firestore
+            coordinate_ref.delete()
+            print(f"[Firestore] Deleted coordinate: {coordinate_id}")
+
+            return {
+                "success": True,
+                "message": f"Successfully deleted coordinate and {deleted_items_count} related items",
+                "deleted_items_count": deleted_items_count
+            }
+
+        except Exception as e:
+            print(f"Error deleting coordinate: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "success": False,
+                "message": f"Error deleting coordinate: {str(e)}",
+                "deleted_items_count": 0
+            }

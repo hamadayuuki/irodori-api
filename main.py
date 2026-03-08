@@ -20,7 +20,8 @@ from models import (
     FashionReviewItem, CoordinateRecommendRequest, HomeResponse, HomeRecentCoordinate,
     ClosetItem, ClosetResponse, AnalyzeRecentCoordinateRequest, AnalyzeRecentCoordinateResponse,
     CoordinateListItem, CoordinateDetailCurrentCoordinate, CoordinateDetailItem,
-    CoordinateDetailResponse, GeminiTestRequest, GeminiTestResponse
+    CoordinateDetailResponse, GeminiTestRequest, GeminiTestResponse,
+    DeleteCoordinateRequest, DeleteCoordinateResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -1486,3 +1487,81 @@ async def get_coordinate_by_date(uid: str, target_date: str):
     )
 
     return [response]
+
+
+@app.get("/health/delete-coordinate")
+async def health_delete_coordinate():
+    """
+    Health check for delete coordinate functionality.
+    Tests with test-user-id to verify the deletion logic works.
+    """
+    try:
+        firebase = FirebaseService()
+        test_user_id = "test-user-id"
+
+        print(f"=== Health check: delete-coordinate ===")
+        print(f"  test_user_id: {test_user_id}")
+
+        # Get user's coordinates to find one to test with
+        coords = firebase.get_user_coordinates(test_user_id, limit=1)
+
+        if not coords:
+            return {
+                "status": "success",
+                "message": "No coordinates found for test user (expected for clean test environment)",
+                "note": "To fully test, create a coordinate first using /api/fashion_review"
+            }
+
+        test_coordinate = coords[0]
+        test_coordinate_id = test_coordinate.get('id')
+
+        print(f"  Found test coordinate: {test_coordinate_id}")
+        print(f"  Coordinate has {len(test_coordinate.get('items', []))} embedded items")
+
+        # Note: We don't actually delete in health check to avoid data loss
+        # Just verify the coordinate exists and show what would be deleted
+        return {
+            "status": "success",
+            "message": "Delete coordinate logic is ready",
+            "test_coordinate_id": test_coordinate_id,
+            "items_count": len(test_coordinate.get('items', [])),
+            "note": "Health check does not actually delete data. Use DELETE /api/coordinate/{coordinate_id}?uid={uid} to delete."
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}"
+        }
+
+
+@app.delete("/api/coordinate/{coordinate_id}", response_model=DeleteCoordinateResponse)
+async def delete_coordinate(coordinate_id: str, uid: str):
+    """
+    指定されたコーディネートと関連アイテムを削除する。
+    Firestore と Firebase Storage から削除される。
+
+    Args:
+        coordinate_id: 削除するコーディネートのID（パスパラメータ）
+        uid: ユーザーID（クエリパラメータ）
+
+    Returns:
+        DeleteCoordinateResponse: 削除結果
+    """
+    try:
+        firebase = FirebaseService()
+        result = firebase.delete_coordinate(uid, coordinate_id)
+
+        return DeleteCoordinateResponse(
+            success=result["success"],
+            message=result["message"],
+            deleted_items_count=result["deleted_items_count"]
+        )
+
+    except Exception as e:
+        print(f"Error in delete_coordinate endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

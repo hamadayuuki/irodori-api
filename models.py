@@ -195,3 +195,15 @@ class GeminiTestRequest(BaseModel):
 
 class GeminiTestResponse(BaseModel):
     response: str
+
+
+# Delete Coordinate Models
+class DeleteCoordinateRequest(BaseModel):
+    uid: str
+    coordinate_id: str
+
+
+class DeleteCoordinateResponse(BaseModel):
+    success: bool
+    message: str
+    deleted_items_count: int
