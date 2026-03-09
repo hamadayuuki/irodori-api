@@ -22,7 +22,8 @@ from models import (
     ClosetItem, ClosetResponse, AnalyzeRecentCoordinateRequest, AnalyzeRecentCoordinateResponse,
     CoordinateListItem, CoordinateDetailCurrentCoordinate, CoordinateDetailItem,
     CoordinateDetailResponse, GeminiTestRequest, GeminiTestResponse,
-    DeleteCoordinateRequest, DeleteCoordinateResponse
+    DeleteCoordinateRequest, DeleteCoordinateResponse,
+    FashionTypeDiagnosisRequest, FashionTypeDiagnosisResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -1601,6 +1602,64 @@ async def delete_coordinate(coordinate_id: str, uid: str):
 
     except Exception as e:
         print(f"Error in delete_coordinate endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/api/fashion-type", response_model=FashionTypeDiagnosisResponse)
+async def diagnose_fashion_type(request: FashionTypeDiagnosisRequest):
+    """
+    Fashion type diagnosis endpoint.
+    Analyzes user's 10 question responses and returns their fashion type.
+
+    Args:
+        request: FashionTypeDiagnosisRequest containing user_id and Q1-Q10 answers
+
+    Returns:
+        FashionTypeDiagnosisResponse: Diagnosis result with type code, name, and scores
+    """
+    try:
+        # バリデーション: user_idの存在チェック
+        if not request.user_id or request.user_id.strip() == "":
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        # 回答データを辞書形式に変換
+        answers = {
+            "Q1": request.Q1,
+            "Q2": request.Q2,
+            "Q3": request.Q3,
+            "Q4": request.Q4,
+            "Q5": request.Q5,
+            "Q6": request.Q6,
+            "Q7": request.Q7,
+            "Q8": request.Q8,
+            "Q9": request.Q9,
+            "Q10": request.Q10
+        }
+
+        print(f"[Fashion Type] Diagnosing for user: {request.user_id}")
+        print(f"[Fashion Type] Answers: {answers}")
+
+        # Firebase Serviceを初期化
+        firebase_service = FirebaseService()
+
+        # Fashion Type Serviceを初期化
+        from fashion_type_service import FashionTypeService
+        fashion_type_service = FashionTypeService(firebase_service.db)
+
+        # 診断実行
+        result = fashion_type_service.diagnose(request.user_id, answers)
+
+        print(f"[Fashion Type] Diagnosis completed: {result['type_code']} - {result['type_name']}")
+
+        # レスポンス返却
+        return FashionTypeDiagnosisResponse(**result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in diagnose_fashion_type endpoint: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

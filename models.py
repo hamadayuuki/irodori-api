@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List, Optional
 from enum import Enum
 
@@ -207,3 +207,36 @@ class DeleteCoordinateResponse(BaseModel):
     success: bool
     message: str
     deleted_items_count: int
+
+
+# Fashion Type Diagnosis Models
+class FashionTypeDiagnosisRequest(BaseModel):
+    user_id: str
+    Q1: int  # 1-5
+    Q2: int  # 1-5
+    Q3: int  # 1-5
+    Q4: int  # 1-5
+    Q5: int  # 1-5
+    Q6: int  # 1-5
+    Q7: int  # 1-5
+    Q8: int  # 1-5
+    Q9: int  # 1-5
+    Q10: int  # 1-5
+
+    @validator('Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10')
+    def validate_score(cls, v):
+        if not 1 <= v <= 5:
+            raise ValueError('Score must be between 1 and 5')
+        return v
+
+
+class FashionTypeDiagnosisResponse(BaseModel):
+    diagnosis_id: str
+    type_code: str  # 4文字コード (e.g., "TPAQ")
+    type_name: str  # タイプ名 (e.g., "アヴァンギャルド・スター")
+    trend_score: float  # 流行スコア (1.0-5.0)
+    self_score: float  # 自己スコア (1.0-5.0)
+    social_score: float  # 社会スコア (1.0-5.0)
+    function_score: float  # 機能スコア (1.0-5.0)
+    economy_score: float  # 経済スコア (1.0-5.0)
+    created_at: str  # ISO format datetime
