@@ -240,3 +240,42 @@ class FashionTypeDiagnosisResponse(BaseModel):
     function_score: float  # 機能スコア (1.0-5.0)
     economy_score: float  # 経済スコア (1.0-5.0)
     created_at: str  # ISO format datetime
+
+
+# Animal Fortune Models
+class AnimalFortuneRequest(BaseModel):
+    user_id: str
+    year: int
+    month: int
+    day: int
+
+    @validator('year')
+    def validate_year(cls, v):
+        if not 1926 <= v <= 2030:
+            raise ValueError('Year must be between 1926 and 2030')
+        return v
+
+    @validator('month')
+    def validate_month(cls, v):
+        if not 1 <= v <= 12:
+            raise ValueError('Month must be between 1 and 12')
+        return v
+
+    @validator('day')
+    def validate_day(cls, v):
+        if not 1 <= v <= 31:
+            raise ValueError('Day must be between 1 and 31')
+        return v
+
+
+class AnimalFortuneResponse(BaseModel):
+    fortune_id: str
+    animal: str  # 動物名 (e.g., "チータ")
+    animal_name: str  # キャラクター名 (e.g., "長距離ランナーのチータ")
+    base_personality: str  # 基本性格
+    life_tendency: str  # 人生傾向
+    female_feature: str  # 女性特徴
+    male_feature: str  # 男性特徴
+    love_tendency: str  # 恋愛傾向
+    link: str  # 詳細情報URL
+    created_at: str  # ISO format datetime

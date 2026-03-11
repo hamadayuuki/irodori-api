@@ -23,7 +23,8 @@ from models import (
     CoordinateListItem, CoordinateDetailCurrentCoordinate, CoordinateDetailItem,
     CoordinateDetailResponse, GeminiTestRequest, GeminiTestResponse,
     DeleteCoordinateRequest, DeleteCoordinateResponse,
-    FashionTypeDiagnosisRequest, FashionTypeDiagnosisResponse
+    FashionTypeDiagnosisRequest, FashionTypeDiagnosisResponse,
+    AnimalFortuneRequest, AnimalFortuneResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -701,6 +702,177 @@ async def health_fashion_review():
             "message": f"Test image not found: {image_path}",
             "result": None
         }
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+
+@app.get("/health/fashion-type")
+async def health_fashion_type():
+    """
+    Health check endpoint for fashion type diagnosis functionality.
+    Uses test data to verify the entire flow:
+    1. Request validation
+    2. Score calculation
+    3. Type code determination
+    4. Response formatting
+    """
+    try:
+        # Test request with sample answers
+        test_request = FashionTypeDiagnosisRequest(
+            user_id="test-user-health-check",
+            Q1=4,  # 流行を追う傾向
+            Q2=2,  # 定番を選ぶ傾向（逆転）
+            Q3=4,  # 自分の好み優先
+            Q4=4,  # 自分らしさ重視
+            Q5=2,  # 他者評価はあまり気にしない
+            Q6=2,  # 社会的印象はあまり気にしない
+            Q7=2,  # 機能性よりデザイン（逆）
+            Q8=2,  # 実用性よりスタイル（逆）
+            Q9=3,  # 投資する傾向
+            Q10=3  # 節約志向（逆転）
+        )
+
+        print("=== Health check for fashion-type ===")
+        print(f"Test user ID: {test_request.user_id}")
+        print(f"Test answers: Q1={test_request.Q1}, Q2={test_request.Q2}, Q3={test_request.Q3}, Q4={test_request.Q4}, Q5={test_request.Q5}")
+        print(f"              Q6={test_request.Q6}, Q7={test_request.Q7}, Q8={test_request.Q8}, Q9={test_request.Q9}, Q10={test_request.Q10}")
+
+        # Call endpoint
+        result = await diagnose_fashion_type(test_request)
+
+        print(f"[Health Check] Fashion type diagnosis completed")
+        print(f"  - Type Code: {result.type_code}")
+        print(f"  - Type Name: {result.type_name}")
+        print(f"  - Trend Score: {result.trend_score}")
+        print(f"  - Self Score: {result.self_score}")
+        print(f"  - Social Score: {result.social_score}")
+        print(f"  - Function Score: {result.function_score}")
+        print(f"  - Economy Score: {result.economy_score}")
+
+        print("\n=== Fashion type diagnosis check completed ===")
+        print("✅ Request validation")
+        print("✅ Score calculation")
+        print("✅ Type code determination")
+        print("✅ Firestore save")
+
+        return {
+            "status": "success",
+            "message": "fashion-type endpoint test completed",
+            "test_params": {
+                "user_id": test_request.user_id,
+                "answers": {
+                    "Q1": test_request.Q1,
+                    "Q2": test_request.Q2,
+                    "Q3": test_request.Q3,
+                    "Q4": test_request.Q4,
+                    "Q5": test_request.Q5,
+                    "Q6": test_request.Q6,
+                    "Q7": test_request.Q7,
+                    "Q8": test_request.Q8,
+                    "Q9": test_request.Q9,
+                    "Q10": test_request.Q10
+                }
+            },
+            "result": {
+                "diagnosis_id": result.diagnosis_id,
+                "type_code": result.type_code,
+                "type_name": result.type_name,
+                "scores": {
+                    "trend": result.trend_score,
+                    "self": result.self_score,
+                    "social": result.social_score,
+                    "function": result.function_score,
+                    "economy": result.economy_score
+                },
+                "created_at": result.created_at
+            }
+        }
+
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+
+@app.get("/health/animal-fortune")
+async def health_animal_fortune():
+    """
+    Health check endpoint for animal fortune diagnosis functionality.
+    Uses test data to verify the entire flow:
+    1. Request validation
+    2. Animal number calculation
+    3. Fortune data retrieval
+    4. Response formatting
+    """
+    try:
+        # Test request with sample birth date
+        test_request = AnimalFortuneRequest(
+            user_id="test-user-health-check",
+            year=2000,
+            month=1,
+            day=1
+        )
+
+        print("=== Health check for animal-fortune ===")
+        print(f"Test user ID: {test_request.user_id}")
+        print(f"Test birth date: {test_request.year}/{test_request.month}/{test_request.day}")
+
+        # Call endpoint
+        result = await diagnose_animal_fortune(test_request)
+
+        print(f"[Health Check] Animal fortune diagnosis completed")
+        print(f"  - Animal: {result.animal}")
+        print(f"  - Animal Name: {result.animal_name}")
+        print(f"  - Base Personality: {result.base_personality[:50]}...")
+        print(f"  - Life Tendency: {result.life_tendency[:50]}...")
+        print(f"  - Female Feature: {result.female_feature[:50]}...")
+        print(f"  - Male Feature: {result.male_feature[:50]}...")
+        print(f"  - Love Tendency: {result.love_tendency[:50]}...")
+        print(f"  - Link: {result.link}")
+
+        print("\n=== Animal fortune diagnosis check completed ===")
+        print("✅ Request validation")
+        print("✅ Animal number calculation")
+        print("✅ Fortune data retrieval")
+        print("✅ Firestore save")
+
+        return {
+            "status": "success",
+            "message": "animal-fortune endpoint test completed",
+            "test_params": {
+                "user_id": test_request.user_id,
+                "birth_date": {
+                    "year": test_request.year,
+                    "month": test_request.month,
+                    "day": test_request.day
+                }
+            },
+            "result": {
+                "fortune_id": result.fortune_id,
+                "animal": result.animal,
+                "animal_name": result.animal_name,
+                "base_personality": result.base_personality,
+                "life_tendency": result.life_tendency,
+                "female_feature": result.female_feature,
+                "male_feature": result.male_feature,
+                "love_tendency": result.love_tendency,
+                "link": result.link,
+                "created_at": result.created_at
+            }
+        }
+
     except Exception as e:
         print(f"Health check failed: {str(e)}")
         import traceback
@@ -1660,6 +1832,59 @@ async def diagnose_fashion_type(request: FashionTypeDiagnosisRequest):
         raise
     except Exception as e:
         print(f"Error in diagnose_fashion_type endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/api/animal-fortune", response_model=AnimalFortuneResponse)
+async def diagnose_animal_fortune(request: AnimalFortuneRequest):
+    """
+    Animal fortune diagnosis endpoint.
+    Analyzes user's birth date and returns their animal fortune.
+
+    Args:
+        request: AnimalFortuneRequest containing user_id, year, month, day
+
+    Returns:
+        AnimalFortuneResponse: Fortune result with animal type and personality traits
+    """
+    try:
+        # バリデーション: user_idの存在チェック
+        if not request.user_id or request.user_id.strip() == "":
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        print(f"[Animal Fortune] Diagnosing for user: {request.user_id}")
+        print(f"[Animal Fortune] Birth date: {request.year}/{request.month}/{request.day}")
+
+        # Firebase Serviceを初期化
+        firebase_service = FirebaseService()
+
+        # Animal Fortune Serviceを初期化
+        from animal_fortune_service import AnimalFortuneService
+        animal_fortune_service = AnimalFortuneService(firebase_service.db)
+
+        # 占い実行
+        result = animal_fortune_service.diagnose(
+            request.user_id,
+            request.year,
+            request.month,
+            request.day
+        )
+
+        print(f"[Animal Fortune] Diagnosis completed: {result['animal_name']}")
+
+        # レスポンス返却
+        return AnimalFortuneResponse(**result)
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        # バリデーションエラー（年月日の範囲外など）
+        print(f"Validation error in diagnose_animal_fortune: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"Error in diagnose_animal_fortune endpoint: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
