@@ -364,33 +364,41 @@ class UserInsightService:
         if fashion_reviews and len(fashion_reviews) > 0:
             prompt_parts.append("## 実際のコーディネート履歴")
             prompt_parts.append("ユーザーが実際に投稿したコーディネートのレビューです。")
-            prompt_parts.append("**重要**: 直近3件を最も重視し、4-7件目は参考情報として扱ってください。\n")
+            prompt_parts.append("**🎯 分析の優先順位:**")
+            prompt_parts.append("1. **直近3件を最重要視** - ユーザーの現在のスタイル傾向を表す")
+            prompt_parts.append("2. 4-7件目は参考情報 - 過去のスタイル傾向との比較に使用\n")
 
             # 直近3件（最重要）
             recent_3 = fashion_reviews[:3]
             if recent_3:
-                prompt_parts.append("### 【最重要】直近3件のコーディネート")
+                prompt_parts.append("### 🔥【最重要】直近3件のコーディネート（ユーザーの現在のスタイル）")
+                prompt_parts.append("**この3件から現在のスタイル傾向を必ず分析してください！**\n")
+
                 for i, review in enumerate(recent_3, 1):
-                    prompt_parts.append(f"\n**コーデ {i}** ({review.get('date', '日付不明')})")
+                    prompt_parts.append(f"**📅 直近コーデ {i}** ({review.get('date', '日付不明')})")
                     prompt_parts.append(f"- キャッチフレーズ: {review.get('ai_catchphrase', 'なし')}")
-                    prompt_parts.append(f"- レビュー: {review.get('ai_review_comment', 'なし')[:100]}...")
+                    prompt_parts.append(f"- レビュー: {review.get('ai_review_comment', 'なし')[:150]}...")
                     tags = review.get('tags', [])
                     if tags:
                         prompt_parts.append(f"- タグ: {', '.join(tags[:5])}")
                     item_types = review.get('item_types', [])
                     if item_types:
                         prompt_parts.append(f"- アイテム種類: {', '.join(item_types)}")
+                    prompt_parts.append("")
 
             # 4-7件目（参考情報）
             older_reviews = fashion_reviews[3:7]
             if older_reviews:
-                prompt_parts.append("\n### 【参考】4-7件目のコーディネート")
+                prompt_parts.append("### 📚【参考】4-7件目のコーディネート（過去のスタイル傾向）")
+                prompt_parts.append("**過去のスタイルとの比較・変化の検出に使用してください**\n")
+
                 for i, review in enumerate(older_reviews, 4):
-                    prompt_parts.append(f"\n**コーデ {i}** ({review.get('date', '日付不明')})")
+                    prompt_parts.append(f"**コーデ {i}** ({review.get('date', '日付不明')})")
                     prompt_parts.append(f"- キャッチフレーズ: {review.get('ai_catchphrase', 'なし')}")
                     tags = review.get('tags', [])
                     if tags:
                         prompt_parts.append(f"- タグ: {', '.join(tags[:3])}")
+                    prompt_parts.append("")
 
             prompt_parts.append("")
 
@@ -399,12 +407,19 @@ class UserInsightService:
 ## 出力指示
 上記の情報を踏まえて、ユーザーのファッションに関するインサイトを生成してください。
 
+**🎯 最重要ルール:**
+1. **必ず「直近3件のコーディネート」を中心に分析してください**
+2. 直近3件から見える具体的な傾向（色、テイスト、アイテム、タグ）を必ず言及
+3. 「最近のあなたは〜」「直近3件のコーデを見ると〜」など、時系列を意識した表現を使用
+4. 可能であれば、過去のコーデ（4-7件目）との比較・変化も言及
+
 **出力ガイドライン:**
 - 200-300文字程度で簡潔にまとめる
-- ファッションタイプ、動物占い、**そして実際のコーディネート履歴（特に直近3件を重視）**の全ての情報を統合して分析する
-- 実際のコーディネート傾向（色、テイスト、アイテムの組み合わせなど）を具体的に言及する
+- **冒頭で「直近3件のコーデ」の分析から始める**（ユーザーに実感させる）
+- ファッションタイプ、動物占いの情報も統合
+- 直近3件に共通する要素を具体的に抽出（例：「直近3件すべてにモノトーンが登場」）
+- 直近3件の具体的なタグやキャッチフレーズを引用
 - ポジティブで親しみやすい口調で書く
-- 具体的なファッションアドバイスを含める
 - 可読性を高めるために適宜改行（\\n）を使用する
 - 強調箇所は **太字** にする
 - 箇条書きを使う場合は2番目以降の行頭に2段改行（\\n\\n）を入れる
@@ -416,7 +431,7 @@ class UserInsightService:
 
 **出力例:**
 {
-    "insight": "あなたは**最先端のトレンドを自分らしく取り入れる個性派**タイプですね！実際のコーディネートを見ると、モノトーンを基調としながらもチェック柄やダメージ加工でアクセントを加える、計算されたスタイルが印象的です。\\n\\n**あなたの強み:**\\n- シンプルながらも個性を忘れない洗練されたセンス\\n- トレンドアイテムを自分らしく着こなす応用力\\n- モノトーンコーデに遊び心をプラスするバランス感覚\\n\\n直近のコーデから、都会的でクールな印象を保ちつつ、さりげない遊び心を忘れないあなたのファッション哲学が伝わります！"
+    "insight": "**直近3件のコーデを見ると、モノトーンを軸にした洗練されたスタイルが確立されていますね！**特にブラック×ホワイトの組み合わせが印象的で、『都会の風を纏う旅人』『シックで大人っぽい雰囲気』といったテイストが一貫しています。\\n\\n**最近のあなたの強み:**\\n- モノトーンコーデに小物やレイヤードで変化をつける技術\\n\\n- シンプルながらも単調にならない計算されたバランス感覚\\n\\n- トレンド感を保ちつつクラシックな要素も取り入れる柔軟性\\n\\nあなたの「トレンド・エディター」タイプの特徴が、実際のコーデにしっかり反映されています。次は差し色としてネイビーやグレーを取り入れると、さらに幅が広がりそうです！"
 }
 """)
 
