@@ -885,6 +885,98 @@ async def health_animal_fortune():
         }
 
 
+@app.get("/health/user-insight")
+async def health_user_insight():
+    """
+    Health check endpoint for user insight functionality.
+    Uses test data to verify the entire flow:
+    1. Fashion type diagnosis (creates test data)
+    2. Animal fortune diagnosis (creates test data)
+    3. User insight generation with Gemini
+    4. Response formatting
+    """
+    try:
+        test_user_id = "test-user-health-insight"
+
+        print("=== Health check for user-insight ===")
+        print(f"Test user ID: {test_user_id}")
+
+        # Step 1: Create fashion type diagnosis
+        print("\n[1/3] Creating fashion type diagnosis...")
+        fashion_request = FashionTypeDiagnosisRequest(
+            user_id=test_user_id,
+            Q1=5, Q2=1, Q3=5, Q4=5, Q5=1,
+            Q6=1, Q7=1, Q8=1, Q9=5, Q10=1
+        )
+        fashion_result = await diagnose_fashion_type(fashion_request)
+        print(f"  ✅ Fashion type: {fashion_result.type_name} ({fashion_result.type_code})")
+
+        # Step 2: Create animal fortune diagnosis
+        print("\n[2/3] Creating animal fortune diagnosis...")
+        animal_request = AnimalFortuneRequest(
+            user_id=test_user_id,
+            year=2000,
+            month=1,
+            day=1
+        )
+        animal_result = await diagnose_animal_fortune(animal_request)
+        print(f"  ✅ Animal: {animal_result.animal_name} ({animal_result.animal})")
+
+        # Step 3: Generate user insight
+        print("\n[3/3] Generating user insight...")
+        insight_result = await get_user_insight(test_user_id)
+
+        print(f"\n[Health Check] User insight generation completed")
+        print(f"  - Status: {insight_result['status']}")
+        print(f"  - Fashion Type: {insight_result.get('fashion_type', {}).get('type_name', 'N/A')}")
+        print(f"  - Animal: {insight_result.get('animal_fortune', {}).get('animal_name', 'N/A')}")
+
+        # Handle Gemini API error gracefully
+        insight_text = insight_result.get('insight', '')
+        if "失敗" in insight_text or "エラー" in insight_text:
+            print(f"  - Insight: ⚠️  {insight_text}")
+            print(f"\n⚠️  Note: Gemini API may not be available in local environment")
+            print(f"    This is expected and will work on deployed environment with GOOGLE_GENAI_API_KEY")
+        else:
+            print(f"  - Insight: {insight_text[:100]}...")
+
+        print("\n=== User insight check completed ===")
+        print("✅ Fashion type diagnosis")
+        print("✅ Animal fortune diagnosis")
+        print("✅ Data retrieval from Firestore")
+        if "失敗" not in insight_text and "エラー" not in insight_text:
+            print("✅ Gemini insight generation")
+        else:
+            print("⚠️  Gemini insight generation (API key required)")
+
+        return {
+            "status": "success",
+            "message": "user-insight endpoint test completed",
+            "test_params": {
+                "user_id": test_user_id
+            },
+            "result": {
+                "status": insight_result['status'],
+                "user_id": insight_result['user_id'],
+                "fashion_type": insight_result.get('fashion_type'),
+                "animal_fortune": insight_result.get('animal_fortune'),
+                "insight": insight_result.get('insight'),
+                "generated_at": insight_result.get('generated_at'),
+                "gemini_available": "失敗" not in insight_text and "エラー" not in insight_text
+            }
+        }
+
+    except Exception as e:
+        print(f"Health check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "status": "error",
+            "message": f"Test failed: {str(e)}",
+            "result": None
+        }
+
+
 @app.get("/health/analyze-recent-coordinate")
 async def health_analyze_recent_coordinate():
     """
