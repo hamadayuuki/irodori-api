@@ -13,27 +13,6 @@ from firebase_admin import firestore
 class FashionTypeService:
     """ファッションタイプ診断サービス"""
 
-    # 16タイプマッピング (4文字コード -> タイプ名)
-    # fashion-type.mdに基づく正式なタイプ名
-    TYPE_NAMES = {
-        "TPAQ": "アヴァンギャルド・スター",
-        "TPAE": "トレンド・エディター",
-        "TPFQ": "アクティブ・クリエイター",
-        "TPFE": "スマート・フォロワー",
-        "TRAQ": "ソーシャル・アイコン",
-        "TRAE": "モテ・プランナー",
-        "TRFQ": "エグゼクティブ・ノマド",
-        "TRFE": "クリーン・スタンダード",
-        "CPAQ": "オーセンティック・アーティスト",
-        "CPAE": "ヴィンテージ・ミニマリスト",
-        "CPFQ": "ヘビー・デューティー",
-        "CPFE": "セルフ・ミニマリスト",
-        "CRAQ": "ロイヤル・クラシック",
-        "CRAE": "トラッド・コンサバ",
-        "CRFQ": "プロフェッショナル・ギア",
-        "CRFE": "エッセンシャル・ワーカー"
-    }
-
     def __init__(self, db):
         """
         Initialize Fashion Type Service
@@ -42,6 +21,7 @@ class FashionTypeService:
             db: Firestore client instance
         """
         self.db = db
+        self._master_cache = {}  # マスターデータのキャッシュ
 
     def calculate_scores(self, answers: Dict[str, int]) -> Dict[str, float]:
         """
@@ -113,7 +93,7 @@ class FashionTypeService:
 
     def get_type_name(self, type_code: str) -> str:
         """
-        タイプコードからタイプ名を取得
+        タイプコードからタイプ名を取得（Firestoreマスターから）
 
         Args:
             type_code: 4文字タイプコード
@@ -121,7 +101,111 @@ class FashionTypeService:
         Returns:
             str: タイプ名
         """
-        return self.TYPE_NAMES.get(type_code, "未定義タイプ")
+        try:
+            # キャッシュをチェック
+            if type_code in self._master_cache:
+                return self._master_cache[type_code].get('type_name', '未定義タイプ')
+
+            # Firestoreから取得
+            doc = self.db.collection('fashion-type-master').document(type_code).get()
+            if doc.exists:
+                data = doc.to_dict()
+                self._master_cache[type_code] = data
+                return data.get('type_name', '未定義タイプ')
+            else:
+                print(f"[Warning] Type code {type_code} not found in fashion-type-master")
+                return '未定義タイプ'
+        except Exception as e:
+            print(f"[Error] Failed to get type name for {type_code}: {e}")
+            return '未定義タイプ'
+
+    def get_type_master(self, type_code: str) -> Dict:
+        """
+        タイプコードからマスターデータの詳細情報を取得
+
+        Args:
+            type_code: 4文字タイプコード
+
+        Returns:
+            dict: マスターデータ（type_name, description, core_stance, group等）
+        """
+        try:
+            # キャッシュをチェック
+            if type_code in self._master_cache:
+                return self._master_cache[type_code]
+
+            # Firestoreから取得
+            doc = self.db.collection('fashion-type-master').document(type_code).get()
+            if doc.exists:
+                data = doc.to_dict()
+                self._master_cache[type_code] = data
+                return data
+            else:
+                print(f"[Warning] Type code {type_code} not found in fashion-type-master")
+                return {}
+        except Exception as e:
+            print(f"[Error] Failed to get type master for {type_code}: {e}")
+            return {}
+
+    def get_group_info(self, group_code: str) -> Dict:
+        """
+        グループコードからグループ情報を取得
+
+        Args:
+            group_code: グループコード（TP, TR, CP, CR）
+
+        Returns:
+            dict: グループ情報（group_name, color, color_nuance, types等）
+        """
+        try:
+            doc = self.db.collection('fashion-type-groups').document(group_code).get()
+            if doc.exists:
+                return doc.to_dict()
+            else:
+                print(f"[Warning] Group code {group_code} not found in fashion-type-groups")
+                return {}
+        except Exception as e:
+            print(f"[Error] Failed to get group info for {group_code}: {e}")
+            return {}
+
+    def get_all_questions(self) -> list:
+        """
+        全質問マスターデータを取得
+
+        Returns:
+            list: 質問データのリスト（order順にソート済み）
+        """
+        try:
+            docs = self.db.collection('fashion-type-questions').stream()
+            questions = []
+            for doc in docs:
+                data = doc.to_dict()
+                questions.append(data)
+
+            # order フィールドでソート
+            questions.sort(key=lambda x: x.get('order', 0))
+            return questions
+        except Exception as e:
+            print(f"[Error] Failed to get questions: {e}")
+            return []
+
+    def get_axes_info(self) -> list:
+        """
+        全軸情報を取得
+
+        Returns:
+            list: 軸データのリスト
+        """
+        try:
+            docs = self.db.collection('fashion-type-axes').stream()
+            axes = []
+            for doc in docs:
+                data = doc.to_dict()
+                axes.append(data)
+            return axes
+        except Exception as e:
+            print(f"[Error] Failed to get axes info: {e}")
+            return []
 
     def diagnose(self, user_id: str, answers: Dict[str, int]) -> Dict:
         """

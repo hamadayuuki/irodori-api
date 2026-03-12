@@ -279,3 +279,34 @@ class AnimalFortuneResponse(BaseModel):
     love_tendency: str  # 恋愛傾向
     link: str  # 詳細情報URL
     created_at: str  # ISO format datetime
+
+
+# User Insight Models
+class UserInsightFashionType(BaseModel):
+    type_code: str
+    type_name: str
+    description: str
+    core_stance: str
+    group: str
+    group_color: str
+    scores: dict
+
+
+class UserInsightAnimalFortune(BaseModel):
+    animal_number: int
+    animal: str
+    animal_name: str
+    base_personality: Optional[str] = None
+    life_tendency: Optional[str] = None
+    female_feature: Optional[str] = None
+    male_feature: Optional[str] = None
+    love_tendency: Optional[str] = None
+
+
+class UserInsightResponse(BaseModel):
+    status: str  # "success" or "no_data"
+    user_id: str
+    fashion_type: Optional[UserInsightFashionType] = None
+    animal_fortune: Optional[UserInsightAnimalFortune] = None
+    insight: str  # Gemini生成のインサイト
+    generated_at: str  # ISO format datetime

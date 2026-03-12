@@ -2,6 +2,7 @@
 Animal Fortune Service
 
 動物占いロジックとFirestore連携を提供します。
+マスターデータはローカルCSVから取得、ユーザー結果のみFirestoreに保存します。
 """
 
 from datetime import datetime
@@ -41,10 +42,10 @@ class AnimalFortuneService:
         Returns:
             dict: 占い結果
         """
-        # 動物占い実行
+        # 動物占い実行（ローカルCSVから計算）
         result = animal_fortune(year, month, day)
 
-        # カレンダーデータと動物データを読み込み
+        # カレンダーデータと動物データを読み込み（ローカルCSV）
         calendar_data = load_calendar_data()
         animals = load_animal_data()
 
@@ -57,7 +58,7 @@ class AnimalFortuneService:
         # 占いID生成
         fortune_id = str(uuid.uuid4())
 
-        # Firestore保存用データ構造
+        # Firestore保存用データ構造（ユーザーの占い結果）
         fortune_data = {
             "id": fortune_id,
             "user_id": user_id,
@@ -103,7 +104,7 @@ class AnimalFortuneService:
 
     def get_user_fortunes(self, user_id: str, limit: int = 10) -> list:
         """
-        ユーザーの占い履歴を取得
+        ユーザーの占い履歴をFirestoreから取得
 
         Args:
             user_id: ユーザーID

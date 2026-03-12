@@ -24,7 +24,8 @@ from models import (
     CoordinateDetailResponse, GeminiTestRequest, GeminiTestResponse,
     DeleteCoordinateRequest, DeleteCoordinateResponse,
     FashionTypeDiagnosisRequest, FashionTypeDiagnosisResponse,
-    AnimalFortuneRequest, AnimalFortuneResponse
+    AnimalFortuneRequest, AnimalFortuneResponse,
+    UserInsightResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -1832,6 +1833,160 @@ async def diagnose_fashion_type(request: FashionTypeDiagnosisRequest):
         raise
     except Exception as e:
         print(f"Error in diagnose_fashion_type endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/fashion-type/questions")
+async def get_fashion_type_questions():
+    """
+    Get all fashion type questions from master data.
+
+    Returns:
+        list: All 10 questions with metadata (sorted by order)
+    """
+    try:
+        firebase_service = FirebaseService()
+        from fashion_type_service import FashionTypeService
+        fashion_type_service = FashionTypeService(firebase_service.db)
+
+        questions = fashion_type_service.get_all_questions()
+
+        return {
+            "status": "success",
+            "count": len(questions),
+            "questions": questions
+        }
+    except Exception as e:
+        print(f"Error in get_fashion_type_questions endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/fashion-type/master/{type_code}")
+async def get_fashion_type_master(type_code: str):
+    """
+    Get detailed master data for a specific fashion type.
+
+    Args:
+        type_code: 4-letter type code (e.g., "TPAQ", "CRFE")
+
+    Returns:
+        dict: Master data including type_name, description, core_stance, group info, etc.
+    """
+    try:
+        firebase_service = FirebaseService()
+        from fashion_type_service import FashionTypeService
+        fashion_type_service = FashionTypeService(firebase_service.db)
+
+        master_data = fashion_type_service.get_type_master(type_code)
+
+        if not master_data:
+            raise HTTPException(status_code=404, detail=f"Type code '{type_code}' not found")
+
+        return {
+            "status": "success",
+            "type_code": type_code,
+            "data": master_data
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in get_fashion_type_master endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/fashion-type/groups/{group_code}")
+async def get_fashion_type_group(group_code: str):
+    """
+    Get group information for a specific fashion type group.
+
+    Args:
+        group_code: 2-letter group code ("TP", "TR", "CP", or "CR")
+
+    Returns:
+        dict: Group information including name, color, nuance, and member types
+    """
+    try:
+        firebase_service = FirebaseService()
+        from fashion_type_service import FashionTypeService
+        fashion_type_service = FashionTypeService(firebase_service.db)
+
+        group_info = fashion_type_service.get_group_info(group_code)
+
+        if not group_info:
+            raise HTTPException(status_code=404, detail=f"Group code '{group_code}' not found")
+
+        return {
+            "status": "success",
+            "group_code": group_code,
+            "data": group_info
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in get_fashion_type_group endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/fashion-type/axes")
+async def get_fashion_type_axes():
+    """
+    Get all axes information (calculation rules, thresholds, etc.).
+
+    Returns:
+        list: All 4 axes definitions
+    """
+    try:
+        firebase_service = FirebaseService()
+        from fashion_type_service import FashionTypeService
+        fashion_type_service = FashionTypeService(firebase_service.db)
+
+        axes = fashion_type_service.get_axes_info()
+
+        return {
+            "status": "success",
+            "count": len(axes),
+            "axes": axes
+        }
+    except Exception as e:
+        print(f"Error in get_fashion_type_axes endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/user-insight", response_model=UserInsightResponse)
+async def get_user_insight(userid: str):
+    """
+    Get user insight based on fashion type and animal fortune data.
+
+    Args:
+        userid: User ID
+
+    Returns:
+        UserInsightResponse: Generated insight from Gemini 2.5-flash-lite
+    """
+    try:
+        firebase_service = FirebaseService()
+        from user_insight_service import UserInsightService
+        user_insight_service = UserInsightService(firebase_service.db)
+
+        # Generate insight
+        result = user_insight_service.generate_insight(userid)
+
+        print(f"[UserInsight] Generated insight for user {userid}: {result['status']}")
+
+        return result
+
+    except Exception as e:
+        print(f"Error in get_user_insight endpoint: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
