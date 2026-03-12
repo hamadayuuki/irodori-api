@@ -2084,6 +2084,42 @@ async def get_user_insight(userid: str):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+@app.get("/api/user-insight/history")
+async def get_user_insight_history(userid: str, limit: int = 10):
+    """
+    Get user insight history.
+
+    Args:
+        userid: User ID
+        limit: Number of insights to retrieve (default: 10)
+
+    Returns:
+        list: User's insight history (newest first)
+    """
+    try:
+        firebase_service = FirebaseService()
+        from user_insight_service import UserInsightService
+        user_insight_service = UserInsightService(firebase_service.db)
+
+        # Get insight history
+        history = user_insight_service.get_insight_history(userid, limit)
+
+        print(f"[UserInsight] Retrieved {len(history)} insights for user {userid}")
+
+        return {
+            "status": "success",
+            "user_id": userid,
+            "count": len(history),
+            "history": history
+        }
+
+    except Exception as e:
+        print(f"Error in get_user_insight_history endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @app.post("/api/animal-fortune", response_model=AnimalFortuneResponse)
 async def diagnose_animal_fortune(request: AnimalFortuneRequest):
     """

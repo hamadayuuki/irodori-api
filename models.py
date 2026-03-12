@@ -306,6 +306,7 @@ class UserInsightAnimalFortune(BaseModel):
 class UserInsightResponse(BaseModel):
     status: str  # "success" or "no_data"
     user_id: str
+    insight_id: Optional[str] = None  # FirestoreドキュメントID
     fashion_type: Optional[UserInsightFashionType] = None
     animal_fortune: Optional[UserInsightAnimalFortune] = None
     insight: str  # Gemini生成のインサイト

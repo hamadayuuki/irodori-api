@@ -7,6 +7,7 @@ User Insight Service
 from datetime import datetime
 from typing import Dict, Optional
 import json
+import uuid
 from firebase_admin import firestore
 from gemini_service import GeminiService
 
@@ -149,7 +150,7 @@ class UserInsightService:
 
     def generate_insight(self, user_id: str) -> Dict:
         """
-        ユーザーのインサイトを生成
+        ユーザーのインサイトを生成してFirestoreに保存
 
         Args:
             user_id: ユーザーID
@@ -158,6 +159,7 @@ class UserInsightService:
             dict: {
                 "status": str,
                 "user_id": str,
+                "insight_id": str,
                 "fashion_type": dict,
                 "animal_fortune": dict,
                 "insight": str,
@@ -173,14 +175,19 @@ class UserInsightService:
             return {
                 "status": "no_data",
                 "user_id": user_id,
+                "insight_id": None,
                 "fashion_type": None,
                 "animal_fortune": None,
                 "insight": "ファッションタイプ診断または動物占いを実施してください。",
                 "generated_at": datetime.now().isoformat()
             }
 
+        # 最近のファッションレビュー（過去7件）を取得
+        fashion_reviews = self.get_recent_fashion_reviews(user_id, limit=7)
+        print(f"[UserInsight] Retrieved {len(fashion_reviews)} fashion reviews for user {user_id}")
+
         # Geminiプロンプト構築
-        prompt = self._build_insight_prompt(fashion_type, animal_fortune)
+        prompt = self._build_insight_prompt(fashion_type, animal_fortune, fashion_reviews)
 
         # Gemini APIでインサイト生成
         try:
@@ -189,29 +196,139 @@ class UserInsightService:
             print(f"[UserInsight] Error generating insight: {e}")
             insight_text = "インサイトの生成に失敗しました。もう一度お試しください。"
 
+        # インサイトIDを生成
+        insight_id = str(uuid.uuid4())
+        generated_at = datetime.now().isoformat()
+
+        # Firestoreに保存
+        try:
+            insight_data = {
+                "id": insight_id,
+                "user_id": user_id,
+                "fashion_type_code": fashion_type.get('type_code') if fashion_type else None,
+                "animal_number": animal_fortune.get('animal_number') if animal_fortune else None,
+                "insight": insight_text,
+                "generated_at": generated_at,
+                "created_at": firestore.SERVER_TIMESTAMP
+            }
+
+            doc_ref = self.db.collection('user-insights').document(insight_id)
+            doc_ref.set(insight_data)
+
+            print(f"[UserInsight] Saved insight {insight_id} for user {user_id}")
+
+        except Exception as e:
+            print(f"[UserInsight] Error saving insight to Firestore: {e}")
+            # 保存に失敗してもインサイトは返す
+
         return {
             "status": "success",
             "user_id": user_id,
+            "insight_id": insight_id,
             "fashion_type": fashion_type,
             "animal_fortune": animal_fortune,
             "insight": insight_text,
-            "generated_at": datetime.now().isoformat()
+            "generated_at": generated_at
         }
 
-    def _build_insight_prompt(self, fashion_type: Optional[Dict], animal_fortune: Optional[Dict]) -> str:
+    def get_insight_history(self, user_id: str, limit: int = 10) -> list:
+        """
+        ユーザーのインサイト履歴を取得
+
+        Args:
+            user_id: ユーザーID
+            limit: 取得件数（デフォルト: 10）
+
+        Returns:
+            list: インサイト履歴（新しい順）
+        """
+        try:
+            # user-insightsコレクションからユーザーのドキュメントを取得
+            docs = (
+                self.db.collection('user-insights')
+                .where('user_id', '==', user_id)
+                .stream()
+            )
+
+            # Pythonでソートして最新N件を取得
+            all_docs = []
+            for doc in docs:
+                data = doc.to_dict()
+                all_docs.append({
+                    "insight_id": data.get('id'),
+                    "user_id": data.get('user_id'),
+                    "fashion_type_code": data.get('fashion_type_code'),
+                    "animal_number": data.get('animal_number'),
+                    "insight": data.get('insight'),
+                    "generated_at": data.get('generated_at')
+                })
+
+            # generated_atでソート（降順）
+            all_docs.sort(key=lambda x: x.get('generated_at', ''), reverse=True)
+
+            return all_docs[:limit]
+
+        except Exception as e:
+            print(f"[UserInsight] Error fetching insight history: {e}")
+            return []
+
+    def get_recent_fashion_reviews(self, user_id: str, limit: int = 7) -> list:
+        """
+        ユーザーの最近のファッションレビュー（コーディネート）を取得
+
+        Args:
+            user_id: ユーザーID
+            limit: 取得件数（デフォルト: 7）
+
+        Returns:
+            list: ファッションレビュー（新しい順）
+        """
+        try:
+            # fashion-reviewコレクションからユーザーのドキュメントを取得
+            docs = (
+                self.db.collection('fashion-review')
+                .where('user_id', '==', user_id)
+                .stream()
+            )
+
+            # Pythonでソートして最新N件を取得
+            all_docs = []
+            for doc in docs:
+                data = doc.to_dict()
+                all_docs.append({
+                    "coordinate_id": data.get('id'),
+                    "date": data.get('date'),
+                    "ai_catchphrase": data.get('ai_catchphrase'),
+                    "ai_review_comment": data.get('ai_review_comment'),
+                    "tags": data.get('tags', []),
+                    "item_types": data.get('item_types', []),
+                    "created_at": data.get('created_at')
+                })
+
+            # created_atでソート（降順）
+            all_docs.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+
+            return all_docs[:limit]
+
+        except Exception as e:
+            print(f"[UserInsight] Error fetching fashion reviews: {e}")
+            return []
+
+    def _build_insight_prompt(self, fashion_type: Optional[Dict], animal_fortune: Optional[Dict], fashion_reviews: Optional[list] = None) -> str:
         """
         インサイト生成用プロンプトを構築
 
         Args:
             fashion_type: ファッションタイプ情報
             animal_fortune: 動物占い情報
+            fashion_reviews: ファッションレビュー履歴（最大7件）
 
         Returns:
             str: Geminiプロンプト
         """
         prompt_parts = [
             "あなたはプロのファッションアドバイザーです。",
-            "ユーザーのファッションタイプと動物占いの結果から、ファッションに関するインサイト（洞察）を生成してください。\n"
+            "ユーザーのファッションタイプ、動物占い、そして実際のコーディネート履歴から、ファッションに関するインサイト（洞察）を生成してください。\n"
         ]
 
         # ファッションタイプ情報
@@ -243,6 +360,40 @@ class UserInsightService:
             if life_tendency:
                 prompt_parts.append(f"- 人生傾向: {life_tendency[:150]}...\n")
 
+        # ファッションレビュー履歴
+        if fashion_reviews and len(fashion_reviews) > 0:
+            prompt_parts.append("## 実際のコーディネート履歴")
+            prompt_parts.append("ユーザーが実際に投稿したコーディネートのレビューです。")
+            prompt_parts.append("**重要**: 直近3件を最も重視し、4-7件目は参考情報として扱ってください。\n")
+
+            # 直近3件（最重要）
+            recent_3 = fashion_reviews[:3]
+            if recent_3:
+                prompt_parts.append("### 【最重要】直近3件のコーディネート")
+                for i, review in enumerate(recent_3, 1):
+                    prompt_parts.append(f"\n**コーデ {i}** ({review.get('date', '日付不明')})")
+                    prompt_parts.append(f"- キャッチフレーズ: {review.get('ai_catchphrase', 'なし')}")
+                    prompt_parts.append(f"- レビュー: {review.get('ai_review_comment', 'なし')[:100]}...")
+                    tags = review.get('tags', [])
+                    if tags:
+                        prompt_parts.append(f"- タグ: {', '.join(tags[:5])}")
+                    item_types = review.get('item_types', [])
+                    if item_types:
+                        prompt_parts.append(f"- アイテム種類: {', '.join(item_types)}")
+
+            # 4-7件目（参考情報）
+            older_reviews = fashion_reviews[3:7]
+            if older_reviews:
+                prompt_parts.append("\n### 【参考】4-7件目のコーディネート")
+                for i, review in enumerate(older_reviews, 4):
+                    prompt_parts.append(f"\n**コーデ {i}** ({review.get('date', '日付不明')})")
+                    prompt_parts.append(f"- キャッチフレーズ: {review.get('ai_catchphrase', 'なし')}")
+                    tags = review.get('tags', [])
+                    if tags:
+                        prompt_parts.append(f"- タグ: {', '.join(tags[:3])}")
+
+            prompt_parts.append("")
+
         # 出力指示
         prompt_parts.append("""
 ## 出力指示
@@ -250,7 +401,8 @@ class UserInsightService:
 
 **出力ガイドライン:**
 - 200-300文字程度で簡潔にまとめる
-- ファッションタイプと動物占いの両方の情報を統合して分析する
+- ファッションタイプ、動物占い、**そして実際のコーディネート履歴（特に直近3件を重視）**の全ての情報を統合して分析する
+- 実際のコーディネート傾向（色、テイスト、アイテムの組み合わせなど）を具体的に言及する
 - ポジティブで親しみやすい口調で書く
 - 具体的なファッションアドバイスを含める
 - 可読性を高めるために適宜改行（\\n）を使用する
@@ -264,7 +416,7 @@ class UserInsightService:
 
 **出力例:**
 {
-    "insight": "あなたは**最先端のトレンドを自分らしく取り入れる個性派**タイプですね！動物占いの結果から、クールでさっぱりとした性格が見えます。\\n\\n**おすすめスタイル:**\\n- デザイナーズブランドの新作を誰よりも早く着こなす\\n- 独創的なアイテムを主役にしたスタイル\\n- シンプルながらも一点豪華主義で個性を演出\\n\\nマイペースながらも、ファッションで自分を表現することを大切にしているあなたには、トレンドを意識しつつも「自分らしさ」を忘れないスタイリングがぴったりです！"
+    "insight": "あなたは**最先端のトレンドを自分らしく取り入れる個性派**タイプですね！実際のコーディネートを見ると、モノトーンを基調としながらもチェック柄やダメージ加工でアクセントを加える、計算されたスタイルが印象的です。\\n\\n**あなたの強み:**\\n- シンプルながらも個性を忘れない洗練されたセンス\\n- トレンドアイテムを自分らしく着こなす応用力\\n- モノトーンコーデに遊び心をプラスするバランス感覚\\n\\n直近のコーデから、都会的でクールな印象を保ちつつ、さりげない遊び心を忘れないあなたのファッション哲学が伝わります！"
 }
 """)
 
