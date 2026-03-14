@@ -10,6 +10,7 @@ import asyncio
 
 from pydantic import BaseModel
 import requests
+from google.cloud import firestore
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import HTMLResponse
@@ -26,7 +27,9 @@ from models import (
     FashionTypeDiagnosisRequest, FashionTypeDiagnosisResponse,
     AnimalFortuneRequest, AnimalFortuneResponse,
     UserInsightResponse,
-    StandardItem, StandardItemsResponse
+    StandardItem, StandardItemsResponse,
+    RegisteredItem, ItemRegistrationResponse, BulkItemMetadata,
+    BulkItemError, BulkItemRegistrationResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -2303,3 +2306,487 @@ async def health_standard_items():
             "status": "unhealthy",
             "message": str(e)
         }
+
+
+@app.post("/api/items/register", response_model=ItemRegistrationResponse)
+async def register_item(
+    user_id: str = Form(...),
+    user_token: str = Form(...),
+    is_standard: str = Form(...),
+    image: UploadFile = File(...),
+    # Standard item fields
+    gender: Optional[str] = Form(None),
+    main_category: Optional[str] = Form(None),
+    sub_category: Optional[str] = Form(None),
+    color: Optional[str] = Form(None),
+    # User closet item fields
+    item_type: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    coordinate_id: Optional[str] = Form(None)
+):
+    """
+    Register a single item (standard or user closet item).
+
+    Args:
+        user_id: User ID
+        user_token: User authentication token
+        is_standard: "true" or "false"
+        image: Item image file (JPEG/PNG)
+
+        For standard items (is_standard=true):
+            gender: "men" or "women"
+            main_category: Main category
+            sub_category: Sub category
+            color: Color name
+
+        For user closet items (is_standard=false):
+            item_type: Item type
+            category: Optional category
+            coordinate_id: Optional coordinate ID
+
+    Returns:
+        ItemRegistrationResponse: Registered item information
+    """
+    import uuid
+    import time
+
+    request_start_time = time.time()
+
+    try:
+        # Authentication validation
+        if not user_id or not user_token:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # File type validation
+        if not image.content_type or not image.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Invalid file type. Please upload an image.")
+
+        # Parse is_standard
+        is_standard_bool = is_standard.lower() == "true"
+
+        # Conditional field validation
+        if is_standard_bool:
+            # Standard item - all fields are required
+            if not all([gender, main_category, sub_category, color]):
+                raise HTTPException(
+                    status_code=400,
+                    detail="All standard item fields are required: gender, main_category, sub_category, color"
+                )
+
+            # Validate gender
+            if gender not in ['men', 'women']:
+                raise HTTPException(status_code=400, detail='gender must be "men" or "women"')
+
+            # Validate main_category
+            valid_categories = ['アウター', 'トップス', 'ボトムス', 'シューズ', 'アクセサリー']
+            if main_category not in valid_categories:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f'main_category must be one of {valid_categories}'
+                )
+        else:
+            # User closet item - item_type is required
+            if not item_type:
+                raise HTTPException(
+                    status_code=400,
+                    detail="item_type is required for user closet items"
+                )
+
+        # Initialize services
+        from firebase_service import FirebaseService
+        firebase_service = FirebaseService()
+
+        # Read image data
+        print(f"[ItemRegistration] Processing {'standard' if is_standard_bool else 'user'} item for user: {user_id}")
+        image_data = await image.read()
+
+        # Generate item ID
+        item_id = str(uuid.uuid4())
+
+        # Determine storage path
+        if is_standard_bool:
+            # Standard item: standard-items/{gender}/{uuid}_{filename}
+            original_filename = image.filename or "item.jpg"
+            storage_path = f"standard-items/{gender}/{item_id}_{original_filename}"
+        else:
+            # User closet item: items/{user_id}/{item_type}/{uuid}.jpg
+            storage_path = f"items/{user_id}/{item_type}/{item_id}.jpg"
+
+        # Upload image to Firebase Storage
+        upload_start = time.time()
+        storage_url = await asyncio.to_thread(
+            firebase_service.upload_image,
+            image_data,
+            storage_path
+        )
+        upload_elapsed = time.time() - upload_start
+        print(f"[ItemRegistration] Image uploaded in {upload_elapsed:.2f}s: {storage_url}")
+
+        # Save metadata to Firestore
+        if is_standard_bool:
+            # Save as standard item
+            file_size = len(image_data)
+            item_data = firebase_service.save_standard_item(
+                item_id=item_id,
+                storage_url=storage_url,
+                storage_path=storage_path,
+                filename=image.filename or "item.jpg",
+                gender=gender,
+                main_category=main_category,
+                sub_category=sub_category,
+                color=color,
+                file_size=file_size
+            )
+
+            # Convert timestamp for response
+            created_at = datetime.utcnow().isoformat()
+
+            registered_item = RegisteredItem(
+                id=item_id,
+                storage_url=storage_url,
+                is_standard=True,
+                gender=gender,
+                main_category=main_category,
+                sub_category=sub_category,
+                color=color,
+                item_type=None,
+                category=None,
+                coordinate_id=None,
+                created_at=created_at
+            )
+        else:
+            # Save as user closet item
+            item_data = firebase_service.save_user_closet_item(
+                user_id=user_id,
+                item_id=item_id,
+                storage_url=storage_url,
+                item_type=item_type,
+                coordinate_id=coordinate_id,
+                category=category,
+                color=color
+            )
+
+            # Convert timestamp for response
+            created_at = datetime.utcnow().isoformat()
+
+            registered_item = RegisteredItem(
+                id=item_id,
+                storage_url=storage_url,
+                is_standard=False,
+                gender=None,
+                main_category=None,
+                sub_category=None,
+                color=color,
+                item_type=item_type,
+                category=category,
+                coordinate_id=coordinate_id,
+                created_at=created_at
+            )
+
+        request_elapsed = time.time() - request_start_time
+        print(f"[ItemRegistration] Completed in {request_elapsed:.2f}s")
+
+        return ItemRegistrationResponse(
+            status="success",
+            item=registered_item
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ItemRegistration] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/api/items/register/bulk", response_model=BulkItemRegistrationResponse)
+async def register_items_bulk(
+    user_id: str = Form(...),
+    user_token: str = Form(...),
+    items_metadata: str = Form(...),
+    images: List[UploadFile] = File(...)
+):
+    """
+    Register multiple items in bulk (all-or-nothing).
+
+    Args:
+        user_id: User ID
+        user_token: User authentication token
+        items_metadata: JSON array of item metadata
+        images: List of item images (order must match metadata)
+
+    Returns:
+        BulkItemRegistrationResponse: Registration result with success/error details
+    """
+    import uuid
+    import time
+
+    request_start_time = time.time()
+    uploaded_urls = []
+    uploaded_storage_paths = []
+
+    try:
+        # Authentication validation
+        if not user_id or not user_token:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Parse metadata JSON
+        try:
+            metadata_list = json.loads(items_metadata)
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON in items_metadata: {str(e)}")
+
+        # Validate metadata is a list
+        if not isinstance(metadata_list, list):
+            raise HTTPException(status_code=400, detail="items_metadata must be a JSON array")
+
+        if len(metadata_list) == 0:
+            raise HTTPException(status_code=400, detail="items_metadata cannot be empty")
+
+        # Validate images count matches metadata count
+        if len(images) != len(metadata_list):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Images count ({len(images)}) must match metadata count ({len(metadata_list)})"
+            )
+
+        # Parse and validate metadata using Pydantic
+        try:
+            validated_metadata = [BulkItemMetadata(**item) for item in metadata_list]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Metadata validation failed: {str(e)}")
+
+        # Validate conditional required fields for each item
+        errors = []
+        for idx, meta in enumerate(validated_metadata):
+            if meta.is_standard:
+                # Standard item validation
+                if not all([meta.gender, meta.main_category, meta.sub_category, meta.color]):
+                    errors.append(BulkItemError(
+                        index=idx,
+                        error="All standard item fields are required: gender, main_category, sub_category, color"
+                    ))
+            else:
+                # User closet item validation
+                if not meta.item_type:
+                    errors.append(BulkItemError(
+                        index=idx,
+                        error="item_type is required for user closet items"
+                    ))
+
+        # If there are validation errors, return them immediately
+        if errors:
+            return BulkItemRegistrationResponse(
+                status="error",
+                total_count=len(metadata_list),
+                success_count=0,
+                failed_count=len(errors),
+                items=[],
+                errors=errors
+            )
+
+        # Validate all file types
+        for idx, image in enumerate(images):
+            if not image.content_type or not image.content_type.startswith('image/'):
+                errors.append(BulkItemError(
+                    index=idx,
+                    error=f"Invalid file type: {image.content_type}. Only images allowed."
+                ))
+
+        if errors:
+            return BulkItemRegistrationResponse(
+                status="error",
+                total_count=len(metadata_list),
+                success_count=0,
+                failed_count=len(errors),
+                items=[],
+                errors=errors
+            )
+
+        print(f"[BulkRegistration] Processing {len(validated_metadata)} items for user: {user_id}")
+
+        # Initialize services
+        from firebase_service import FirebaseService
+        firebase_service = FirebaseService()
+
+        # Step 1: Upload all images in parallel
+        upload_start = time.time()
+        upload_tasks = []
+        item_ids = []
+        storage_paths = []
+        file_sizes = []
+
+        for idx, (meta, image) in enumerate(zip(validated_metadata, images)):
+            # Read image data
+            image_data = await image.read()
+            file_sizes.append(len(image_data))
+
+            # Generate item ID
+            item_id = str(uuid.uuid4())
+            item_ids.append(item_id)
+
+            # Determine storage path
+            if meta.is_standard:
+                original_filename = image.filename or f"item_{idx}.jpg"
+                storage_path = f"standard-items/{meta.gender}/{item_id}_{original_filename}"
+            else:
+                storage_path = f"items/{user_id}/{meta.item_type}/{item_id}.jpg"
+
+            storage_paths.append(storage_path)
+
+            # Create upload task
+            upload_tasks.append(
+                asyncio.to_thread(
+                    firebase_service.upload_image,
+                    image_data,
+                    storage_path
+                )
+            )
+
+        # Execute all uploads in parallel
+        upload_results = await asyncio.gather(*upload_tasks, return_exceptions=True)
+
+        # Check for upload errors
+        for idx, result in enumerate(upload_results):
+            if isinstance(result, Exception):
+                # Upload failed - rollback
+                print(f"[BulkRegistration] Upload failed for item {idx}: {result}")
+                raise Exception(f"Image upload failed for item {idx}: {str(result)}")
+
+        uploaded_urls = upload_results
+        uploaded_storage_paths = storage_paths
+
+        upload_elapsed = time.time() - upload_start
+        print(f"[BulkRegistration] {len(uploaded_urls)} images uploaded in {upload_elapsed:.2f}s")
+
+        # Step 2: Prepare batch data for Firestore
+        batch_items = []
+        registered_items = []
+
+        for idx, (meta, item_id, storage_url, image) in enumerate(zip(validated_metadata, item_ids, uploaded_urls, images)):
+            created_at = datetime.utcnow().isoformat()
+
+            if meta.is_standard:
+                # Standard item
+                file_size = file_sizes[idx]
+
+                item_data = {
+                    'id': item_id,
+                    'filename': image.filename or f"item_{idx}.jpg",
+                    'storage_url': storage_url,
+                    'storage_path': storage_paths[idx],
+                    'main_category': meta.main_category,
+                    'sub_category': meta.sub_category,
+                    'color': meta.color,
+                    'gender': meta.gender,
+                    'is_standard': True,
+                    'file_size': file_size,
+                    'uploaded_at': firestore.SERVER_TIMESTAMP
+                }
+
+                batch_items.append({
+                    'collection': 'items',
+                    'document_id': item_id,
+                    'data': item_data
+                })
+
+                registered_items.append(RegisteredItem(
+                    id=item_id,
+                    storage_url=storage_url,
+                    is_standard=True,
+                    gender=meta.gender,
+                    main_category=meta.main_category,
+                    sub_category=meta.sub_category,
+                    color=meta.color,
+                    item_type=None,
+                    category=None,
+                    coordinate_id=None,
+                    created_at=created_at
+                ))
+            else:
+                # User closet item
+                item_data = {
+                    'id': item_id,
+                    'user_id': user_id,
+                    'item_type': meta.item_type,
+                    'image_url': storage_url,
+                    'created_at': firestore.SERVER_TIMESTAMP
+                }
+
+                if meta.coordinate_id:
+                    item_data['coordinate_id'] = meta.coordinate_id
+                if meta.category:
+                    item_data['category'] = meta.category
+                if meta.color:
+                    item_data['color'] = meta.color
+
+                batch_items.append({
+                    'collection': f'users/{user_id}/items',
+                    'document_id': item_id,
+                    'data': item_data
+                })
+
+                registered_items.append(RegisteredItem(
+                    id=item_id,
+                    storage_url=storage_url,
+                    is_standard=False,
+                    gender=None,
+                    main_category=None,
+                    sub_category=None,
+                    color=meta.color,
+                    item_type=meta.item_type,
+                    category=meta.category,
+                    coordinate_id=meta.coordinate_id,
+                    created_at=created_at
+                ))
+
+        # Step 3: Batch write to Firestore
+        batch_start = time.time()
+        batch_result = firebase_service.register_items_batch(batch_items)
+
+        if not batch_result['success']:
+            raise Exception(f"Batch write failed: {batch_result['error']}")
+
+        batch_elapsed = time.time() - batch_start
+        print(f"[BulkRegistration] Batch write completed in {batch_elapsed:.2f}s")
+
+        request_elapsed = time.time() - request_start_time
+        print(f"[BulkRegistration] Total time: {request_elapsed:.2f}s")
+
+        return BulkItemRegistrationResponse(
+            status="success",
+            total_count=len(registered_items),
+            success_count=len(registered_items),
+            failed_count=0,
+            items=registered_items,
+            errors=[]
+        )
+
+    except HTTPException:
+        # Rollback: Delete uploaded images
+        if uploaded_urls:
+            print(f"[Rollback] Deleting {len(uploaded_urls)} uploaded images")
+            for url in uploaded_urls:
+                try:
+                    firebase_service.delete_image_from_url(url)
+                except Exception as del_error:
+                    print(f"[Rollback Error] Failed to delete {url}: {del_error}")
+        raise
+
+    except Exception as e:
+        # Rollback: Delete uploaded images
+        if uploaded_urls:
+            print(f"[Rollback] Deleting {len(uploaded_urls)} uploaded images due to error")
+            from firebase_service import FirebaseService
+            firebase_service = FirebaseService()
+            for url in uploaded_urls:
+                try:
+                    firebase_service.delete_image_from_url(url)
+                except Exception as del_error:
+                    print(f"[Rollback Error] Failed to delete {url}: {del_error}")
+
+        print(f"[BulkRegistration] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Bulk registration failed: {str(e)}")

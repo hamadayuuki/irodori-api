@@ -644,6 +644,157 @@ class FirebaseService:
             print(f"Error getting user items: {e}")
             return []
 
+    def save_standard_item(
+        self,
+        item_id: str,
+        storage_url: str,
+        storage_path: str,
+        filename: str,
+        gender: str,
+        main_category: str,
+        sub_category: str,
+        color: str,
+        file_size: int
+    ) -> Dict[str, Any]:
+        """
+        Save standard item to Firestore items collection.
+
+        Args:
+            item_id: UUID for the item
+            storage_url: Firebase Storage public URL
+            storage_path: Storage path in Firebase Storage
+            filename: Original filename
+            gender: "men" or "women"
+            main_category: Main category (アウター, トップス, etc.)
+            sub_category: Sub category (Gジャン, Tシャツ, etc.)
+            color: Color name
+            file_size: File size in bytes
+
+        Returns:
+            dict: Saved item data
+        """
+        try:
+            item_data = {
+                'id': item_id,
+                'filename': filename,
+                'storage_url': storage_url,
+                'storage_path': storage_path,
+                'main_category': main_category,
+                'sub_category': sub_category,
+                'color': color,
+                'gender': gender,
+                'is_standard': True,
+                'file_size': file_size,
+                'uploaded_at': firestore.SERVER_TIMESTAMP
+            }
+
+            doc_ref = self.db.collection('items').document(item_id)
+            doc_ref.set(item_data)
+
+            print(f"[StandardItem] Saved standard item: {item_id}")
+            return item_data
+        except Exception as e:
+            print(f"Error saving standard item: {e}")
+            raise
+
+    def save_user_closet_item(
+        self,
+        user_id: str,
+        item_id: str,
+        storage_url: str,
+        item_type: str,
+        coordinate_id: Optional[str] = None,
+        category: Optional[str] = None,
+        color: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Save user closet item to users/{user_id}/items collection.
+
+        Args:
+            user_id: User ID
+            item_id: UUID for the item
+            storage_url: Firebase Storage public URL
+            item_type: Item type (トップス, ボトムス, etc.)
+            coordinate_id: Optional coordinate ID
+            category: Optional category
+            color: Optional color
+
+        Returns:
+            dict: Saved item data
+        """
+        try:
+            item_data = {
+                'id': item_id,
+                'user_id': user_id,
+                'item_type': item_type,
+                'image_url': storage_url,
+                'created_at': firestore.SERVER_TIMESTAMP
+            }
+
+            if coordinate_id:
+                item_data['coordinate_id'] = coordinate_id
+            if category:
+                item_data['category'] = category
+            if color:
+                item_data['color'] = color
+
+            doc_ref = self.db.collection('users').document(user_id).collection('items').document(item_id)
+            doc_ref.set(item_data)
+
+            print(f"[UserClosetItem] Saved user item: {item_id} for user: {user_id}")
+            return item_data
+        except Exception as e:
+            print(f"Error saving user closet item: {e}")
+            raise
+
+    def register_items_batch(
+        self,
+        items_data: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Register multiple items using Firestore batch write.
+        All-or-nothing transaction for data consistency.
+
+        Args:
+            items_data: List of item data dictionaries, each containing:
+                - collection: 'items' or 'users/{user_id}/items'
+                - document_id: Document ID
+                - data: Data to save
+
+        Returns:
+            dict: {"success": bool, "registered_count": int, "error": Optional[str]}
+        """
+        try:
+            batch = self.db.batch()
+
+            for item in items_data:
+                if item['collection'].startswith('users/'):
+                    # users/{user_id}/items pattern
+                    parts = item['collection'].split('/')
+                    user_id = parts[1]
+                    doc_ref = self.db.collection('users').document(user_id).collection('items').document(item['document_id'])
+                else:
+                    # items collection
+                    doc_ref = self.db.collection(item['collection']).document(item['document_id'])
+
+                batch.set(doc_ref, item['data'])
+
+            batch.commit()
+
+            print(f"[BatchRegistration] Successfully registered {len(items_data)} items")
+            return {
+                "success": True,
+                "registered_count": len(items_data),
+                "error": None
+            }
+        except Exception as e:
+            print(f"[BatchRegistration] Error: {e}")
+            return {
+                "success": False,
+                "registered_count": 0,
+                "error": str(e)
+            }
+
     def get_recent_coordinates_with_tags(
         self,
         user_id: str,

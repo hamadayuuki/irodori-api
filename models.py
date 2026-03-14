@@ -332,3 +332,65 @@ class StandardItemsResponse(BaseModel):
     total_count: int
     items: List[StandardItem]
     filters: Optional[dict] = None  # Applied filters
+
+
+# Item Registration Models
+class RegisteredItem(BaseModel):
+    id: str
+    storage_url: str
+    is_standard: bool
+    # Standard item fields
+    gender: Optional[str] = None
+    main_category: Optional[str] = None
+    sub_category: Optional[str] = None
+    color: Optional[str] = None
+    # User closet item fields
+    item_type: Optional[str] = None
+    category: Optional[str] = None
+    coordinate_id: Optional[str] = None
+    created_at: str
+
+
+class ItemRegistrationResponse(BaseModel):
+    status: str
+    item: RegisteredItem
+
+
+class BulkItemMetadata(BaseModel):
+    index: int
+    is_standard: bool
+    # Conditional required fields
+    gender: Optional[str] = None
+    main_category: Optional[str] = None
+    sub_category: Optional[str] = None
+    color: Optional[str] = None
+    item_type: Optional[str] = None
+    category: Optional[str] = None
+    coordinate_id: Optional[str] = None
+
+    @validator('gender')
+    def validate_gender(cls, v):
+        if v and v not in ['men', 'women']:
+            raise ValueError('gender must be "men" or "women"')
+        return v
+
+    @validator('main_category')
+    def validate_main_category(cls, v):
+        valid = ['アウター', 'トップス', 'ボトムス', 'シューズ', 'アクセサリー']
+        if v and v not in valid:
+            raise ValueError(f'main_category must be one of {valid}')
+        return v
+
+
+class BulkItemError(BaseModel):
+    index: int
+    error: str
+
+
+class BulkItemRegistrationResponse(BaseModel):
+    status: str
+    total_count: int
+    success_count: int
+    failed_count: int
+    items: List[RegisteredItem]
+    errors: List[BulkItemError]
