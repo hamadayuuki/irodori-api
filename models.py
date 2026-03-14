@@ -311,3 +311,24 @@ class UserInsightResponse(BaseModel):
     animal_fortune: Optional[UserInsightAnimalFortune] = None
     insight: str  # Gemini生成のインサイト
     generated_at: str  # ISO format datetime
+
+
+# Standard Items Models
+class StandardItem(BaseModel):
+    id: str  # Firestore document ID
+    filename: str
+    storage_url: str
+    main_category: str  # アウター, トップス, ボトムス, etc.
+    sub_category: str  # Gジャン, Tシャツ, etc.
+    color: str  # ブラック, ホワイト, etc.
+    gender: str  # men or women
+    is_standard: bool
+    file_size: int
+    uploaded_at: Optional[str] = None
+
+
+class StandardItemsResponse(BaseModel):
+    status: str
+    total_count: int
+    items: List[StandardItem]
+    filters: Optional[dict] = None  # Applied filters

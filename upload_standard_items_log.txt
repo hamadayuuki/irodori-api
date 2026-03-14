@@ -1,0 +1,144 @@
+2026-03-14 19:34:00,320 - INFO - Men's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men
+2026-03-14 19:34:00,320 - INFO - Women's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women
+2026-03-14 19:34:00,338 - INFO - 見つかったアイテム数: 86
+2026-03-14 19:34:00,338 - INFO -   Men's: 41
+2026-03-14 19:34:00,338 - INFO -   Women's: 45
+2026-03-14 19:34:48,460 - ERROR - Firestoreドキュメント作成エラー: Timeout of 60.0s exceeded, last exception: 503 DNS resolution failed for firestore.googleapis.com: C-ares status is not ARES_SUCCESS qtype=SRV name=_grpclb._tcp.firestore.googleapis.com: Could not contact DNS servers
+2026-03-14 19:34:48,460 - WARNING - 部分的成功: Storageアップロード成功、Firestore登録失敗 - standard-items/men/ボトムス_スラックス_ブラック.png
+2026-03-14 19:37:01,803 - INFO - Men's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men
+2026-03-14 19:37:01,803 - INFO - Women's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women
+2026-03-14 19:37:01,815 - INFO - 見つかったアイテム数: 86
+2026-03-14 19:37:01,815 - INFO -   Men's: 41
+2026-03-14 19:37:01,816 - INFO -   Women's: 45
+2026-03-14 19:37:02,074 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_スラックス_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:02,175 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_長袖Tシャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:02,304 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_スラックス_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:02,438 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_シャツ_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:02,546 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_ジーンズ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:02,661 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_チェックシャツ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:02,816 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_ボタンダウンシャツ_ライトブルー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:02,937 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_Tシャツ_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,083 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_パーカー_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,200 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_テーラードジャケット_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,326 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_ショートパンツ_ダークグレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,462 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_カーディガン_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,582 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_Gジャン_インディゴ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,699 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_ショートパンツ_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,833 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_タートルネックニット_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:03,957 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_ポロシャツ_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,091 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_テーパードパンツ_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,199 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_長袖Tシャツ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,309 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_ワイドパンツ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,427 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_スウェットパンツ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,540 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_マウンテンパーカー_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,658 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_ショートパンツ_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,791 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_チノパン_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:04,923 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_ジーンズ_インディゴ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:05,043 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_スウェットパンツ_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:05,315 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_カーゴパンツ_カーキ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:05,426 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_Tシャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:05,540 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_MA-1_オリーブグリーン.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:05,654 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/ボトムス_チノパン_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:05,767 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_レザージャケット_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:05,875 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_ストライプシャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,007 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_Vネックセーター_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,130 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_スウェット_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,247 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_ダウンジャケット_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,362 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_シャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,509 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_ステンカラーコート_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,631 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_ライダースジャケット_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,740 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_クルーネックニット_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,846 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_デニムシャツ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:06,951 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/トップス_Tシャツ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,091 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men/アウター_トレンチコート_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,198 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_スラックス_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,325 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_長袖Tシャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,447 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_スラックス_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,556 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_プリーツスカート_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,681 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_シャツ_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,807 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_ジーンズ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:07,920 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_Tシャツ_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,047 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_パーカー_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,153 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_ショートパンツ_ダークグレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,270 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_カーディガン_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,378 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_Vネックニット_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,488 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_ブラウス_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,600 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/アウター_カーディガン_オレンジ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,717 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/アウター_Gジャン_インディゴ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,850 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_ショートパンツ_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:08,964 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_タートルネックニット_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,083 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/アウター_ニット_ピンク.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,206 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_ポロシャツ_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,315 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_テーパードパンツ_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,436 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_フレアスカート_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,553 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_ミディスカート_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,656 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_長袖Tシャツ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,753 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_ワイドパンツ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,880 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_スウェットパンツ_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:09,984 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_ショートパンツ_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,090 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_チノパン_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,188 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_ジーンズ_インディゴ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,309 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_スウェットパンツ_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,435 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_カーゴパンツ_カーキ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,565 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_Tシャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,674 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/アウター_カーディガン_ピンク.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,797 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/ボトムス_チノパン_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:10,920 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/アウター_レザージャケット_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,054 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_シャツ_ピンク.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,161 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_ストライプシャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,276 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_ブラウス_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,406 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_キャミソール_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,547 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_Vネックセーター_ネイビー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,655 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_スウェット_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,778 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/アウター_ダウンジャケット_ブラック.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,887 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_シャツ_ホワイト.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:11,999 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/アウター_ステンカラーコート_ベージュ.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:37:12,112 - ERROR - アップロード失敗: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women/トップス_クルーネックニット_グレー.png - Reauthentication is needed. Please run `gcloud auth application-default login` to reauthenticate.
+2026-03-14 19:40:14,463 - INFO - Men's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men
+2026-03-14 19:40:14,463 - INFO - Women's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women
+2026-03-14 19:40:14,465 - INFO - 見つかったアイテム数: 86
+2026-03-14 19:40:14,465 - INFO -   Men's: 41
+2026-03-14 19:40:14,465 - INFO -   Women's: 45
+2026-03-14 19:41:06,415 - ERROR - Firestoreドキュメント作成エラー: Timeout of 60.0s exceeded, last exception: 503 DNS resolution failed for firestore.googleapis.com: C-ares status is not ARES_SUCCESS qtype=A name=firestore.googleapis.com is_balancer=0: Could not contact DNS servers
+2026-03-14 19:41:06,465 - WARNING - 部分的成功: Storageアップロード成功、Firestore登録失敗 - standard-items/men/ボトムス_スラックス_ブラック.png
+2026-03-14 19:44:57,593 - INFO - ======================================================================
+2026-03-14 19:44:57,594 - INFO - Standard Items を Firebase にアップロード
+2026-03-14 19:44:57,594 - INFO - ======================================================================
+2026-03-14 19:44:57,594 - INFO - 
+[初期化] Firebase接続中...
+2026-03-14 19:44:57,667 - INFO - ✅ Firebase接続成功
+2026-03-14 19:44:57,667 - INFO - Men's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men
+2026-03-14 19:44:57,667 - INFO - Women's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women
+2026-03-14 19:44:57,683 - INFO - 見つかったアイテム数: 86
+2026-03-14 19:44:57,683 - INFO -   Men's: 41
+2026-03-14 19:44:57,683 - INFO -   Women's: 45
+2026-03-14 19:45:56,493 - ERROR - Firestoreドキュメント作成エラー: Timeout of 60.0s exceeded, last exception: 503 DNS resolution failed for firestore.googleapis.com: C-ares status is not ARES_SUCCESS qtype=SRV name=_grpclb._tcp.firestore.googleapis.com: Could not contact DNS servers
+2026-03-14 19:45:56,610 - WARNING - 部分的成功: Storageアップロード成功、Firestore登録失敗 - standard-items/men/ボトムス_スラックス_ブラック.png
+2026-03-14 19:46:51,143 - ERROR - Firestoreドキュメント作成エラー: Timeout of 60.0s exceeded, last exception: 503 DNS resolution failed for firestore.googleapis.com: C-ares status is not ARES_SUCCESS qtype=SRV name=_grpclb._tcp.firestore.googleapis.com: Could not contact DNS servers
+2026-03-14 19:46:51,147 - WARNING - 部分的成功: Storageアップロード成功、Firestore登録失敗 - standard-items/men/トップス_長袖Tシャツ_ホワイト.png
+2026-03-14 19:49:15,717 - INFO - ======================================================================
+2026-03-14 19:49:15,718 - INFO - Standard Items を Firebase にアップロード
+2026-03-14 19:49:15,718 - INFO - ======================================================================
+2026-03-14 19:49:15,718 - INFO - 
+[初期化] Firebase接続中...
+2026-03-14 19:49:15,801 - INFO - ✅ Firebase接続成功
+2026-03-14 19:49:15,801 - INFO - Men's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men
+2026-03-14 19:49:15,801 - INFO - Women's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women
+2026-03-14 19:49:15,817 - INFO - 見つかったアイテム数: 86
+2026-03-14 19:49:15,817 - INFO -   Men's: 41
+2026-03-14 19:49:15,817 - INFO -   Women's: 45
+2026-03-14 19:50:04,541 - ERROR - Firestoreドキュメント作成エラー: Timeout of 60.0s exceeded, last exception: 503 DNS resolution failed for firestore.googleapis.com: C-ares status is not ARES_SUCCESS qtype=A name=firestore.googleapis.com is_balancer=0: Could not contact DNS servers
+2026-03-14 19:50:04,555 - WARNING - 部分的成功: Storageアップロード成功、Firestore登録失敗 - standard-items/men/ボトムス_スラックス_ブラック.png
+2026-03-14 19:50:25,393 - INFO - ======================================================================
+2026-03-14 19:50:25,393 - INFO - Standard Items を Firebase にアップロード
+2026-03-14 19:50:25,394 - INFO - ======================================================================
+2026-03-14 19:50:25,394 - INFO - 
+[初期化] Firebase接続中...
+2026-03-14 19:50:25,463 - INFO - ✅ Firebase接続成功
+2026-03-14 19:50:25,463 - INFO - Men's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/men
+2026-03-14 19:50:25,463 - INFO - Women's アイテム検索: /Users/yuki.hamada/Desktop/IRODORI/data/item/standard-items/women
+2026-03-14 19:50:25,465 - INFO - 見つかったアイテム数: 86
+2026-03-14 19:50:25,465 - INFO -   Men's: 41
+2026-03-14 19:50:25,465 - INFO -   Women's: 45
+2026-03-14 19:51:10,696 - ERROR - Firestoreドキュメント作成エラー: Timeout of 60.0s exceeded, last exception: 503 DNS resolution failed for firestore.googleapis.com: C-ares status is not ARES_SUCCESS qtype=A name=firestore.googleapis.com is_balancer=0: Could not contact DNS servers
+2026-03-14 19:51:10,710 - WARNING - 部分的成功: Storageアップロード成功、Firestore登録失敗 - standard-items/men/ボトムス_スラックス_ブラック.png

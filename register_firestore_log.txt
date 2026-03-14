@@ -1,0 +1,14 @@
+2026-03-14 19:59:19,111 - INFO - ======================================================================
+2026-03-14 19:59:19,111 - INFO - Storage のアイテムを Firestore に登録
+2026-03-14 19:59:19,111 - INFO - ======================================================================
+2026-03-14 19:59:19,111 - INFO - 
+[初期化] Firebase 接続中...
+2026-03-14 19:59:19,188 - INFO - ✅ Firebase 接続成功
+2026-03-14 19:59:19,188 - INFO - 
+[1/2] Storage からファイルリストを取得中...
+2026-03-14 20:00:28,060 - INFO - ✅ Storage から 86 件のファイルを取得しました
+2026-03-14 20:00:28,061 - INFO -   Men's: 41
+2026-03-14 20:00:28,061 - INFO -   Women's: 45
+2026-03-14 20:00:28,061 - INFO - 
+[2/2] Firestore に登録中...
+2026-03-14 20:05:10,220 - ERROR - ❌ 登録失敗: アウター_Gジャン_インディゴ.png - Timeout of 300.0s exceeded, last exception: 503 DNS resolution failed for firestore.googleapis.com: C-ares status is not ARES_SUCCESS qtype=SRV name=_grpclb._tcp.firestore.googleapis.com: Could not contact DNS servers

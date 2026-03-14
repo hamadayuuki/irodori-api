@@ -1,0 +1,1088 @@
+2026-03-14 20:08:04,577 - INFO - ======================================================================
+2026-03-14 20:08:04,577 - INFO - REST API で Firestore に登録（DNS問題回避版）
+2026-03-14 20:08:04,577 - INFO - ======================================================================
+2026-03-14 20:08:04,577 - INFO - 
+[初期化] Firebase 接続中...
+2026-03-14 20:08:05,046 - INFO - ✅ Firebase 接続成功（REST API モード）
+2026-03-14 20:08:05,046 - INFO - 
+[1/3] Storage からファイルリストを取得中...
+2026-03-14 20:09:15,004 - INFO - ✅ Storage から 86 件のファイルを取得しました
+2026-03-14 20:09:15,006 - INFO - 
+[2/3] REST API で Firestore に登録中...
+2026-03-14 20:09:15,405 - ERROR - ❌ 登録失敗: アウター_Gジャン_インディゴ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:15,751 - ERROR - ❌ 登録失敗: アウター_MA-1_オリーブグリーン.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:16,131 - ERROR - ❌ 登録失敗: アウター_ステンカラーコート_ベージュ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:16,558 - ERROR - ❌ 登録失敗: アウター_ダウンジャケット_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:16,931 - ERROR - ❌ 登録失敗: アウター_テーラードジャケット_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:17,259 - ERROR - ❌ 登録失敗: アウター_トレンチコート_ベージュ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:17,630 - ERROR - ❌ 登録失敗: アウター_マウンテンパーカー_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:18,053 - ERROR - ❌ 登録失敗: アウター_ライダースジャケット_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:18,402 - ERROR - ❌ 登録失敗: アウター_レザージャケット_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:18,722 - ERROR - ❌ 登録失敗: トップス_Tシャツ_グレー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:19,073 - ERROR - ❌ 登録失敗: トップス_Tシャツ_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:19,400 - ERROR - ❌ 登録失敗: トップス_Tシャツ_ホワイト.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:19,797 - ERROR - ❌ 登録失敗: トップス_Vネックセーター_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:20,111 - ERROR - ❌ 登録失敗: トップス_カーディガン_ベージュ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:20,492 - ERROR - ❌ 登録失敗: トップス_クルーネックニット_グレー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:20,848 - ERROR - ❌ 登録失敗: トップス_シャツ_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:09:21,145 - ERROR - ❌ 登録失敗: トップス_シャツ_ホワイト.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:26:52,405 - INFO - ======================================================================
+2026-03-14 20:26:52,405 - INFO - REST API で Firestore に登録（DNS問題回避版）
+2026-03-14 20:26:52,406 - INFO - ======================================================================
+2026-03-14 20:26:52,406 - INFO - 
+[初期化] Firebase 接続中...
+2026-03-14 20:26:52,721 - INFO - ✅ Firebase 接続成功（REST API モード）
+2026-03-14 20:26:52,722 - INFO - 
+[1/3] Storage からファイルリストを取得中...
+2026-03-14 20:27:56,671 - INFO - ✅ Storage から 86 件のファイルを取得しました
+2026-03-14 20:27:56,672 - INFO - 
+[2/3] REST API で Firestore に登録中...
+2026-03-14 20:27:56,982 - ERROR - ❌ 登録失敗: アウター_Gジャン_インディゴ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:57,224 - ERROR - ❌ 登録失敗: アウター_MA-1_オリーブグリーン.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:57,453 - ERROR - ❌ 登録失敗: アウター_ステンカラーコート_ベージュ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:57,703 - ERROR - ❌ 登録失敗: アウター_ダウンジャケット_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:57,964 - ERROR - ❌ 登録失敗: アウター_テーラードジャケット_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:58,206 - ERROR - ❌ 登録失敗: アウター_トレンチコート_ベージュ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:58,439 - ERROR - ❌ 登録失敗: アウター_マウンテンパーカー_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:58,677 - ERROR - ❌ 登録失敗: アウター_ライダースジャケット_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:58,912 - ERROR - ❌ 登録失敗: アウター_レザージャケット_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:59,123 - ERROR - ❌ 登録失敗: トップス_Tシャツ_グレー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:59,330 - ERROR - ❌ 登録失敗: トップス_Tシャツ_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:59,519 - ERROR - ❌ 登録失敗: トップス_Tシャツ_ホワイト.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:59,718 - ERROR - ❌ 登録失敗: トップス_Vネックセーター_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:27:59,909 - ERROR - ❌ 登録失敗: トップス_カーディガン_ベージュ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:00,107 - ERROR - ❌ 登録失敗: トップス_クルーネックニット_グレー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:00,304 - ERROR - ❌ 登録失敗: トップス_シャツ_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:00,500 - ERROR - ❌ 登録失敗: トップス_シャツ_ホワイト.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:00,693 - ERROR - ❌ 登録失敗: トップス_スウェット_グレー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:00,908 - ERROR - ❌ 登録失敗: トップス_ストライプシャツ_ホワイト.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:01,113 - ERROR - ❌ 登録失敗: トップス_タートルネックニット_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:01,292 - ERROR - ❌ 登録失敗: トップス_チェックシャツ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:01,493 - ERROR - ❌ 登録失敗: トップス_デニムシャツ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:01,684 - ERROR - ❌ 登録失敗: トップス_パーカー_グレー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:01,898 - ERROR - ❌ 登録失敗: トップス_ボタンダウンシャツ_ライトブルー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:02,109 - ERROR - ❌ 登録失敗: トップス_ポロシャツ_ネイビー.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:02,284 - ERROR - ❌ 登録失敗: トップス_長袖Tシャツ_ブラック.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:02,476 - ERROR - ❌ 登録失敗: トップス_長袖Tシャツ_ホワイト.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:02,703 - ERROR - ❌ 登録失敗: ボトムス_カーゴパンツ_カーキ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:28:02,893 - ERROR - ❌ 登録失敗: ボトムス_ジーンズ_インディゴ.png - HTTP 400: {
+  "error": {
+    "code": 400,
+    "message": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\"\nInvalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\"",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "document.fields[7].value.integer_value",
+            "description": "Invalid value at 'document.fields[7].value.integer_value' (TYPE_INT64), \"True\""
+          },
+          {
+            "field": "document.fields[12].value.integer_value",
+            "description": "Invalid value at 'document.fields[12].value.integer_value' (TYPE_INT64), \"True\""
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2026-03-14 20:30:45,920 - INFO - ======================================================================
+2026-03-14 20:30:45,920 - INFO - REST API で Firestore に登録（DNS問題回避版）
+2026-03-14 20:30:45,920 - INFO - ======================================================================
+2026-03-14 20:30:45,920 - INFO - 
+[初期化] Firebase 接続中...
+2026-03-14 20:30:46,211 - INFO - ✅ Firebase 接続成功（REST API モード）
+2026-03-14 20:30:46,211 - INFO - 
+[1/3] Storage からファイルリストを取得中...

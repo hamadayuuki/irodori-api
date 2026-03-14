@@ -25,7 +25,8 @@ from models import (
     DeleteCoordinateRequest, DeleteCoordinateResponse,
     FashionTypeDiagnosisRequest, FashionTypeDiagnosisResponse,
     AnimalFortuneRequest, AnimalFortuneResponse,
-    UserInsightResponse
+    UserInsightResponse,
+    StandardItem, StandardItemsResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -2171,3 +2172,134 @@ async def diagnose_animal_fortune(request: AnimalFortuneRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+# ========================================
+# Standard Items API
+# ========================================
+
+@app.get("/api/standard-items", response_model=StandardItemsResponse)
+async def get_standard_items(
+    gender: Optional[str] = None,
+    main_category: Optional[str] = None,
+    sub_category: Optional[str] = None,
+    color: Optional[str] = None,
+    limit: int = 100
+):
+    """
+    Get standard items from Firestore with optional filters.
+
+    Args:
+        gender: Gender filter ("men" or "women")
+        main_category: Main category filter (e.g., "アウター")
+        sub_category: Sub category filter (e.g., "Gジャン")
+        color: Color filter (e.g., "ブラック")
+        limit: Maximum number of items to return (default: 100)
+
+    Returns:
+        StandardItemsResponse: List of standard items matching the filters
+    """
+    try:
+        print(f"[Standard Items] Getting items with filters:")
+        print(f"  gender: {gender}")
+        print(f"  main_category: {main_category}")
+        print(f"  sub_category: {sub_category}")
+        print(f"  color: {color}")
+        print(f"  limit: {limit}")
+
+        # Standard Items Serviceを初期化
+        from standard_items_service import StandardItemsService
+        service = StandardItemsService()
+
+        # アイテム取得
+        items = service.get_standard_items(
+            gender=gender,
+            main_category=main_category,
+            sub_category=sub_category,
+            color=color,
+            limit=limit
+        )
+
+        print(f"[Standard Items] Found {len(items)} items")
+
+        # レスポンス作成
+        return StandardItemsResponse(
+            status="success",
+            total_count=len(items),
+            items=[StandardItem(**item) for item in items],
+            filters={
+                "gender": gender,
+                "main_category": main_category,
+                "sub_category": sub_category,
+                "color": color,
+                "limit": limit
+            }
+        )
+
+    except Exception as e:
+        print(f"Error in get_standard_items endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/standard-items/categories")
+async def get_standard_items_categories(gender: Optional[str] = None):
+    """
+    Get category summary for standard items.
+
+    Args:
+        gender: Gender filter ("men" or "women")
+
+    Returns:
+        Category summary with counts
+    """
+    try:
+        print(f"[Standard Items] Getting categories for gender: {gender}")
+
+        # Standard Items Serviceを初期化
+        from standard_items_service import StandardItemsService
+        service = StandardItemsService()
+
+        # カテゴリ取得
+        categories = service.get_categories(gender=gender)
+
+        print(f"[Standard Items] Found {categories['total_count']} items in {len(categories['categories'])} categories")
+
+        return {
+            "status": "success",
+            "gender": gender,
+            **categories
+        }
+
+    except Exception as e:
+        print(f"Error in get_standard_items_categories endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/health/standard-items")
+async def health_standard_items():
+    """
+    Health check endpoint for standard items API.
+    """
+    try:
+        from standard_items_service import StandardItemsService
+        service = StandardItemsService()
+
+        # テスト: 全アイテム数を取得
+        items = service.get_standard_items(limit=1)
+
+        return {
+            "status": "healthy",
+            "message": "Standard items service is running",
+            "sample_item_exists": len(items) > 0
+        }
+
+    except Exception as e:
+        print(f"Health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "message": str(e)
+        }
