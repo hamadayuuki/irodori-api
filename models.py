@@ -108,6 +108,64 @@ class CoordinateRecommendRequest(BaseModel):
     num_candidates: int = 5
 
 
+# Bulk Coordinate Recommend Models
+class BulkCoordinateRecommendItem(BaseModel):
+    """単一アイテムの情報（bulk requestの要素）"""
+    item_id: Optional[str] = None  # クライアント提供の識別子
+    gender: Gender
+    input_type: str  # アウター, トップス, ボトムス, シューズ, アクセサリー
+    category: str
+    text: str
+    num_outfits: int = 3
+    num_candidates: int = 5
+
+
+class BulkCoordinateRecommendRequest(BaseModel):
+    """複数アイテムのコーデ提案リクエスト"""
+    items: List["BulkCoordinateRecommendItem"]
+
+    @validator('items')
+    def validate_items_not_empty(cls, v):
+        if not v or len(v) == 0:
+            raise ValueError('items list cannot be empty')
+        if len(v) > 20:
+            raise ValueError('Maximum 20 items per request')
+        return v
+
+
+class CoordinateRecommendResult(BaseModel):
+    """単一アイテムの推薦結果"""
+    item_id: Optional[str] = None
+    index: int
+    status: str  # "success" or "error"
+
+    # 元のリクエストデータ（マッチング用）
+    input_type: str
+    category: str
+    text: str
+
+    # 推薦結果（成功時のみ）
+    recommend_coordinates: Optional[List[Dict[str, Any]]] = None
+    outer_list: Optional[List[str]] = None
+    tops_list: Optional[List[str]] = None
+    bottoms_list: Optional[List[str]] = None
+    shoes_list: Optional[List[str]] = None
+    accessories_list: Optional[List[str]] = None
+
+    # エラー情報（失敗時のみ）
+    error: Optional[str] = None
+
+
+class BulkCoordinateRecommendResponse(BaseModel):
+    """複数アイテムのコーデ提案レスポンス"""
+    status: str  # "success", "partial_success", "error"
+    total_count: int
+    success_count: int
+    failed_count: int
+    results: List[CoordinateRecommendResult]
+    processing_time_ms: Optional[float] = None
+
+
 # Home API Models
 class HomeRecentCoordinate(BaseModel):
     id: str

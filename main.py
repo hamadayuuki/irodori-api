@@ -29,7 +29,9 @@ from models import (
     UserInsightResponse,
     StandardItem, StandardItemsResponse,
     RegisteredItem, ItemRegistrationResponse, BulkItemMetadata,
-    BulkItemError, BulkItemRegistrationResponse
+    BulkItemError, BulkItemRegistrationResponse,
+    BulkCoordinateRecommendItem, BulkCoordinateRecommendRequest,
+    CoordinateRecommendResult, BulkCoordinateRecommendResponse
 )
 from coordinate_service import CoordinateService
 from yahoo_shopping import YahooShoppingClient
@@ -1441,6 +1443,157 @@ async def coordinate_recommend(request: CoordinateRecommendRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/api/coordinate-recommend/bulk", response_model=BulkCoordinateRecommendResponse)
+async def coordinate_recommend_bulk(request: BulkCoordinateRecommendRequest):
+    """
+    複数アイテムのコーディネート提案を並列処理で実行。
+
+    各アイテムは独立して処理され、個別の失敗は全体を止めない。
+
+    Args:
+        request: BulkCoordinateRecommendRequest
+
+    Returns:
+        BulkCoordinateRecommendResponse: 各アイテムの推薦結果
+    """
+    import time
+    start_time = time.time()
+
+    try:
+        print(f"[BulkCoordinateRecommend] Processing {len(request.items)} items")
+
+        # 並列処理タスクの作成
+        tasks = []
+        for idx, item in enumerate(request.items):
+            task = asyncio.to_thread(
+                _process_single_recommendation,
+                item,
+                idx
+            )
+            tasks.append(task)
+
+        # 全ての推薦を並列実行
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # 結果の集計
+        processed_results = []
+        success_count = 0
+        failed_count = 0
+
+        for idx, result in enumerate(results):
+            if isinstance(result, Exception):
+                # 予期しない例外
+                processed_results.append(CoordinateRecommendResult(
+                    item_id=request.items[idx].item_id,
+                    index=idx,
+                    status="error",
+                    input_type=request.items[idx].input_type,
+                    category=request.items[idx].category,
+                    text=request.items[idx].text,
+                    error=str(result)
+                ))
+                failed_count += 1
+            else:
+                processed_results.append(result)
+                if result.status == "success":
+                    success_count += 1
+                else:
+                    failed_count += 1
+
+        # 全体ステータスの決定
+        if failed_count == 0:
+            overall_status = "success"
+        elif success_count == 0:
+            overall_status = "error"
+        else:
+            overall_status = "partial_success"
+
+        processing_time = (time.time() - start_time) * 1000
+
+        print(f"[BulkCoordinateRecommend] Completed: {success_count} success, {failed_count} failed, {processing_time:.2f}ms")
+
+        return BulkCoordinateRecommendResponse(
+            status=overall_status,
+            total_count=len(request.items),
+            success_count=success_count,
+            failed_count=failed_count,
+            results=processed_results,
+            processing_time_ms=processing_time
+        )
+
+    except Exception as e:
+        print(f"[BulkCoordinateRecommend] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+def _process_single_recommendation(
+    item: BulkCoordinateRecommendItem,
+    index: int
+) -> CoordinateRecommendResult:
+    """
+    単一アイテムの推薦処理（asyncio.to_thread用ヘルパー関数）
+
+    Args:
+        item: 推薦対象アイテム
+        index: リクエスト配列内の位置
+
+    Returns:
+        CoordinateRecommendResult: 推薦結果またはエラー
+    """
+    try:
+        # 既存のRecommendServiceを呼び出し
+        result = RecommendService.get_recommendations(
+            gender=item.gender,
+            input_type=item.input_type,
+            category=item.category,
+            text=item.text,
+            num_outfits=item.num_outfits,
+            num_candidates=item.num_candidates
+        )
+
+        # サービスがエラーを返した場合
+        if "error" in result:
+            return CoordinateRecommendResult(
+                item_id=item.item_id,
+                index=index,
+                status="error",
+                input_type=item.input_type,
+                category=item.category,
+                text=item.text,
+                error=result["error"]
+            )
+
+        # 成功 - 推薦結果を返す
+        return CoordinateRecommendResult(
+            item_id=item.item_id,
+            index=index,
+            status="success",
+            input_type=item.input_type,
+            category=item.category,
+            text=item.text,
+            recommend_coordinates=result.get("recommend_coordinates", []),
+            outer_list=result.get("outer_list", []),
+            tops_list=result.get("tops_list", []),
+            bottoms_list=result.get("bottoms_list", []),
+            shoes_list=result.get("shoes_list", []),
+            accessories_list=result.get("accessories_list", [])
+        )
+
+    except Exception as e:
+        # 処理中の予期しないエラー
+        return CoordinateRecommendResult(
+            item_id=item.item_id,
+            index=index,
+            status="error",
+            input_type=item.input_type,
+            category=item.category,
+            text=item.text,
+            error=f"Processing failed: {str(e)}"
+        )
 
 
 @app.get("/health/coordinate-recommend")
