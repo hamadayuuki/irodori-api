@@ -60,20 +60,20 @@ class StandardItemsService:
         """
         try:
             # ベースクエリ: is_standard=True のアイテムのみ
-            query = self.db.collection('items').where('is_standard', '==', True)
+            query = self.db.collection('items').where(filter=('is_standard', '==', True))
 
             # フィルタを適用
             if gender:
-                query = query.where('gender', '==', gender)
+                query = query.where(filter=('gender', '==', gender))
 
             if main_category:
-                query = query.where('main_category', '==', main_category)
+                query = query.where(filter=('main_category', '==', main_category))
 
             if sub_category:
-                query = query.where('sub_category', '==', sub_category)
+                query = query.where(filter=('sub_category', '==', sub_category))
 
             if color:
-                query = query.where('color', '==', color)
+                query = query.where(filter=('color', '==', color))
 
             # 取得
             docs = query.limit(limit).stream()
