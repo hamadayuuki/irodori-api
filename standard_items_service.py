@@ -14,12 +14,26 @@ class StandardItemsService:
         """Initialize Standard Items Service"""
         # Firebase初期化（すでに初期化されている場合はスキップ）
         if not firebase_admin._apps:
-            service_account_key = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY')
-            if not service_account_key:
-                raise ValueError("FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set")
+            try:
+                # Try to get credentials from file path
+                cred_path = "/etc/secrets/irodori-e5c71-firebase-adminsdk-fbsvc-6b9a947875.json"
 
-            cred = credentials.Certificate(service_account_key)
-            firebase_admin.initialize_app(cred)
+                if cred_path and os.path.exists(cred_path):
+                    # シークレットファイルから認証情報を読み込み
+                    cred = credentials.Certificate(cred_path)
+                    firebase_admin.initialize_app(cred, {
+                        'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET')
+                    })
+                else:
+                    # Application Default Credentials (ADC) を使用
+                    firebase_admin.initialize_app(options={
+                        'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET')
+                    })
+
+                print("Firebase initialized successfully in StandardItemsService")
+            except Exception as e:
+                print(f"Error initializing Firebase in StandardItemsService: {e}")
+                raise
 
         self.db = firestore.client()
 
