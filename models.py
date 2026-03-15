@@ -119,6 +119,14 @@ class BulkCoordinateRecommendItem(BaseModel):
     num_outfits: int = 3
     num_candidates: int = 5
 
+    @validator('num_outfits')
+    def validate_num_outfits(cls, v):
+        if v < 1:
+            raise ValueError('num_outfits must be at least 1')
+        if v > 10:
+            raise ValueError('num_outfits must be at most 10')
+        return v
+
 
 class BulkCoordinateRecommendRequest(BaseModel):
     """複数アイテムのコーデ提案リクエスト"""
@@ -128,8 +136,8 @@ class BulkCoordinateRecommendRequest(BaseModel):
     def validate_items_not_empty(cls, v):
         if not v or len(v) == 0:
             raise ValueError('items list cannot be empty')
-        if len(v) > 20:
-            raise ValueError('Maximum 20 items per request')
+        if len(v) > 3:
+            raise ValueError('Maximum 3 items per request')
         return v
 
 
