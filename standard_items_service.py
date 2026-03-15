@@ -6,7 +6,7 @@ Standard Items Service
 import os
 from typing import List, Dict, Optional
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, storage
 from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime
 
@@ -14,8 +14,10 @@ class StandardItemsService:
     def __init__(self):
         """Initialize Standard Items Service"""
         # Firebase初期化（すでに初期化されている場合はスキップ）
+        # FirebaseService と互換性を持たせるため、両方のチェックを使用
         if not firebase_admin._apps:
             try:
+                print("[StandardItemsService] Firebase not initialized, initializing now...")
                 # Try to get credentials from file path
                 cred_path = "/etc/secrets/irodori-e5c71-firebase-adminsdk-fbsvc-6b9a947875.json"
 
@@ -31,10 +33,22 @@ class StandardItemsService:
                         'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET')
                     })
 
-                print("Firebase initialized successfully in StandardItemsService")
+                print("[StandardItemsService] Firebase initialized successfully")
+
+                # FirebaseService の初期化フラグも設定して互換性を保つ
+                try:
+                    from firebase_service import FirebaseService
+                    FirebaseService._initialized = True
+                    FirebaseService._db = firestore.client()
+                    FirebaseService._bucket = storage.bucket()
+                except Exception as sync_error:
+                    print(f"[StandardItemsService] Warning: Could not sync with FirebaseService: {sync_error}")
+
             except Exception as e:
-                print(f"Error initializing Firebase in StandardItemsService: {e}")
+                print(f"[StandardItemsService] Error initializing Firebase: {e}")
                 raise
+        else:
+            print("[StandardItemsService] Firebase already initialized, reusing existing app")
 
         self.db = firestore.client()
 
