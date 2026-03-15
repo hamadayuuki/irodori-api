@@ -7,6 +7,7 @@ import os
 from typing import List, Dict, Optional
 import firebase_admin
 from firebase_admin import credentials, firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime
 
 class StandardItemsService:
@@ -60,20 +61,20 @@ class StandardItemsService:
         """
         try:
             # ベースクエリ: is_standard=True のアイテムのみ
-            query = self.db.collection('items').where(filter=('is_standard', '==', True))
+            query = self.db.collection('items').where(filter=FieldFilter('is_standard', '==', True))
 
             # フィルタを適用
             if gender:
-                query = query.where(filter=('gender', '==', gender))
+                query = query.where(filter=FieldFilter('gender', '==', gender))
 
             if main_category:
-                query = query.where(filter=('main_category', '==', main_category))
+                query = query.where(filter=FieldFilter('main_category', '==', main_category))
 
             if sub_category:
-                query = query.where(filter=('sub_category', '==', sub_category))
+                query = query.where(filter=FieldFilter('sub_category', '==', sub_category))
 
             if color:
-                query = query.where(filter=('color', '==', color))
+                query = query.where(filter=FieldFilter('color', '==', color))
 
             # 取得
             docs = query.limit(limit).stream()
