@@ -2465,37 +2465,22 @@ async def health_standard_items():
 async def register_item(
     user_id: str = Form(...),
     user_token: str = Form(...),
-    is_standard: str = Form(...),
     image: UploadFile = File(...),
-    # Standard item fields
-    gender: Optional[str] = Form(None),
-    main_category: Optional[str] = Form(None),
-    sub_category: Optional[str] = Form(None),
-    color: Optional[str] = Form(None),
     # User closet item fields
-    item_type: Optional[str] = Form(None),
+    item_type: str = Form(...),
     category: Optional[str] = Form(None),
     coordinate_id: Optional[str] = Form(None)
 ):
     """
-    Register a single item (standard or user closet item).
+    Register a single user closet item.
 
     Args:
         user_id: User ID
         user_token: User authentication token
-        is_standard: "true" or "false"
         image: Item image file (JPEG/PNG)
-
-        For standard items (is_standard=true):
-            gender: "men" or "women"
-            main_category: Main category
-            sub_category: Sub category
-            color: Color name
-
-        For user closet items (is_standard=false):
-            item_type: Item type
-            category: Optional category
-            coordinate_id: Optional coordinate ID
+        item_type: Item type (required)
+        category: Optional category
+        coordinate_id: Optional coordinate ID
 
     Returns:
         ItemRegistrationResponse: Registered item information
@@ -2514,56 +2499,29 @@ async def register_item(
         if not image.content_type or not image.content_type.startswith('image/'):
             raise HTTPException(status_code=400, detail="Invalid file type. Please upload an image.")
 
-        # Parse is_standard
-        is_standard_bool = is_standard.lower() == "true"
+        # User items are NEVER standard items - force is_standard to False
+        is_standard_bool = False
 
-        # Conditional field validation
-        if is_standard_bool:
-            # Standard item - all fields are required
-            if not all([gender, main_category, sub_category, color]):
-                raise HTTPException(
-                    status_code=400,
-                    detail="All standard item fields are required: gender, main_category, sub_category, color"
-                )
-
-            # Validate gender
-            if gender not in ['men', 'women']:
-                raise HTTPException(status_code=400, detail='gender must be "men" or "women"')
-
-            # Validate main_category
-            valid_categories = ['アウター', 'トップス', 'ボトムス', 'シューズ', 'アクセサリー']
-            if main_category not in valid_categories:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f'main_category must be one of {valid_categories}'
-                )
-        else:
-            # User closet item - item_type is required
-            if not item_type:
-                raise HTTPException(
-                    status_code=400,
-                    detail="item_type is required for user closet items"
-                )
+        # Validate required field
+        if not item_type:
+            raise HTTPException(
+                status_code=400,
+                detail="item_type is required for user closet items"
+            )
 
         # Initialize services
         from firebase_service import FirebaseService
         firebase_service = FirebaseService()
 
         # Read image data
-        print(f"[ItemRegistration] Processing {'standard' if is_standard_bool else 'user'} item for user: {user_id}")
+        print(f"[ItemRegistration] Processing user closet item for user: {user_id}")
         image_data = await image.read()
 
         # Generate item ID
         item_id = str(uuid.uuid4())
 
-        # Determine storage path
-        if is_standard_bool:
-            # Standard item: standard-items/{gender}/{uuid}_{filename}
-            original_filename = image.filename or "item.jpg"
-            storage_path = f"standard-items/{gender}/{item_id}_{original_filename}"
-        else:
-            # User closet item: items/{user_id}/{item_type}/{uuid}.jpg
-            storage_path = f"items/{user_id}/{item_type}/{item_id}.jpg"
+        # User closet item storage path: items/{user_id}/{item_type}/{uuid}.jpg
+        storage_path = f"items/{user_id}/{item_type}/{item_id}.jpg"
 
         # Upload image to Firebase Storage
         upload_start = time.time()
@@ -2575,66 +2533,33 @@ async def register_item(
         upload_elapsed = time.time() - upload_start
         print(f"[ItemRegistration] Image uploaded in {upload_elapsed:.2f}s: {storage_url}")
 
-        # Save metadata to Firestore
-        if is_standard_bool:
-            # Save as standard item
-            file_size = len(image_data)
-            item_data = firebase_service.save_standard_item(
-                item_id=item_id,
-                storage_url=storage_url,
-                storage_path=storage_path,
-                filename=image.filename or "item.jpg",
-                gender=gender,
-                main_category=main_category,
-                sub_category=sub_category,
-                color=color,
-                file_size=file_size
-            )
+        # Save metadata to Firestore as user closet item
+        item_data = firebase_service.save_user_closet_item(
+            user_id=user_id,
+            item_id=item_id,
+            storage_url=storage_url,
+            item_type=item_type,
+            coordinate_id=coordinate_id,
+            category=category,
+            color=color
+        )
 
-            # Convert timestamp for response
-            created_at = datetime.utcnow().isoformat()
+        # Convert timestamp for response
+        created_at = datetime.utcnow().isoformat()
 
-            registered_item = RegisteredItem(
-                id=item_id,
-                storage_url=storage_url,
-                is_standard=True,
-                gender=gender,
-                main_category=main_category,
-                sub_category=sub_category,
-                color=color,
-                item_type=None,
-                category=None,
-                coordinate_id=None,
-                created_at=created_at
-            )
-        else:
-            # Save as user closet item
-            item_data = firebase_service.save_user_closet_item(
-                user_id=user_id,
-                item_id=item_id,
-                storage_url=storage_url,
-                item_type=item_type,
-                coordinate_id=coordinate_id,
-                category=category,
-                color=color
-            )
-
-            # Convert timestamp for response
-            created_at = datetime.utcnow().isoformat()
-
-            registered_item = RegisteredItem(
-                id=item_id,
-                storage_url=storage_url,
-                is_standard=False,
-                gender=None,
-                main_category=None,
-                sub_category=None,
-                color=color,
-                item_type=item_type,
-                category=category,
-                coordinate_id=coordinate_id,
-                created_at=created_at
-            )
+        registered_item = RegisteredItem(
+            id=item_id,
+            storage_url=storage_url,
+            is_standard=False,
+            gender=None,
+            main_category=None,
+            sub_category=None,
+            color=color,
+            item_type=item_type,
+            category=category,
+            coordinate_id=coordinate_id,
+            created_at=created_at
+        )
 
         request_elapsed = time.time() - request_start_time
         print(f"[ItemRegistration] Completed in {request_elapsed:.2f}s")
@@ -2661,12 +2586,12 @@ async def register_items_bulk(
     images: List[UploadFile] = File(...)
 ):
     """
-    Register multiple items in bulk (all-or-nothing).
+    Register multiple user closet items in bulk (all-or-nothing).
 
     Args:
         user_id: User ID
         user_token: User authentication token
-        items_metadata: JSON array of item metadata
+        items_metadata: JSON array of item metadata (each item must have item_type)
         images: List of item images (order must match metadata)
 
     Returns:
@@ -2705,39 +2630,11 @@ async def register_items_bulk(
             )
 
         # Parse and validate metadata using Pydantic
+        # BulkItemMetadata now enforces item_type as required field
         try:
             validated_metadata = [BulkItemMetadata(**item) for item in metadata_list]
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Metadata validation failed: {str(e)}")
-
-        # Validate conditional required fields for each item
-        errors = []
-        for idx, meta in enumerate(validated_metadata):
-            if meta.is_standard:
-                # Standard item validation
-                if not all([meta.gender, meta.main_category, meta.sub_category, meta.color]):
-                    errors.append(BulkItemError(
-                        index=idx,
-                        error="All standard item fields are required: gender, main_category, sub_category, color"
-                    ))
-            else:
-                # User closet item validation
-                if not meta.item_type:
-                    errors.append(BulkItemError(
-                        index=idx,
-                        error="item_type is required for user closet items"
-                    ))
-
-        # If there are validation errors, return them immediately
-        if errors:
-            return BulkItemRegistrationResponse(
-                status="error",
-                total_count=len(metadata_list),
-                success_count=0,
-                failed_count=len(errors),
-                items=[],
-                errors=errors
-            )
 
         # Validate all file types
         for idx, image in enumerate(images):
@@ -2779,13 +2676,8 @@ async def register_items_bulk(
             item_id = str(uuid.uuid4())
             item_ids.append(item_id)
 
-            # Determine storage path
-            if meta.is_standard:
-                original_filename = image.filename or f"item_{idx}.jpg"
-                storage_path = f"standard-items/{meta.gender}/{item_id}_{original_filename}"
-            else:
-                storage_path = f"items/{user_id}/{meta.item_type}/{item_id}.jpg"
-
+            # User closet item storage path: items/{user_id}/{item_type}/{uuid}.jpg
+            storage_path = f"items/{user_id}/{meta.item_type}/{item_id}.jpg"
             storage_paths.append(storage_path)
 
             # Create upload task
@@ -2813,86 +2705,48 @@ async def register_items_bulk(
         upload_elapsed = time.time() - upload_start
         print(f"[BulkRegistration] {len(uploaded_urls)} images uploaded in {upload_elapsed:.2f}s")
 
-        # Step 2: Prepare batch data for Firestore
+        # Step 2: Prepare batch data for Firestore (user closet items only)
         batch_items = []
         registered_items = []
 
         for idx, (meta, item_id, storage_url, image) in enumerate(zip(validated_metadata, item_ids, uploaded_urls, images)):
             created_at = datetime.utcnow().isoformat()
 
-            if meta.is_standard:
-                # Standard item
-                file_size = file_sizes[idx]
+            # All items are user closet items
+            item_data = {
+                'id': item_id,
+                'user_id': user_id,
+                'item_type': meta.item_type,
+                'image_url': storage_url,
+                'created_at': firestore.SERVER_TIMESTAMP
+            }
 
-                item_data = {
-                    'id': item_id,
-                    'filename': image.filename or f"item_{idx}.jpg",
-                    'storage_url': storage_url,
-                    'storage_path': storage_paths[idx],
-                    'main_category': meta.main_category,
-                    'sub_category': meta.sub_category,
-                    'color': meta.color,
-                    'gender': meta.gender,
-                    'is_standard': True,
-                    'file_size': file_size,
-                    'uploaded_at': firestore.SERVER_TIMESTAMP
-                }
+            if meta.coordinate_id:
+                item_data['coordinate_id'] = meta.coordinate_id
+            if meta.category:
+                item_data['category'] = meta.category
+            if meta.color:
+                item_data['color'] = meta.color
 
-                batch_items.append({
-                    'collection': 'items',
-                    'document_id': item_id,
-                    'data': item_data
-                })
+            batch_items.append({
+                'collection': f'users/{user_id}/items',
+                'document_id': item_id,
+                'data': item_data
+            })
 
-                registered_items.append(RegisteredItem(
-                    id=item_id,
-                    storage_url=storage_url,
-                    is_standard=True,
-                    gender=meta.gender,
-                    main_category=meta.main_category,
-                    sub_category=meta.sub_category,
-                    color=meta.color,
-                    item_type=None,
-                    category=None,
-                    coordinate_id=None,
-                    created_at=created_at
-                ))
-            else:
-                # User closet item
-                item_data = {
-                    'id': item_id,
-                    'user_id': user_id,
-                    'item_type': meta.item_type,
-                    'image_url': storage_url,
-                    'created_at': firestore.SERVER_TIMESTAMP
-                }
-
-                if meta.coordinate_id:
-                    item_data['coordinate_id'] = meta.coordinate_id
-                if meta.category:
-                    item_data['category'] = meta.category
-                if meta.color:
-                    item_data['color'] = meta.color
-
-                batch_items.append({
-                    'collection': f'users/{user_id}/items',
-                    'document_id': item_id,
-                    'data': item_data
-                })
-
-                registered_items.append(RegisteredItem(
-                    id=item_id,
-                    storage_url=storage_url,
-                    is_standard=False,
-                    gender=None,
-                    main_category=None,
-                    sub_category=None,
-                    color=meta.color,
-                    item_type=meta.item_type,
-                    category=meta.category,
-                    coordinate_id=meta.coordinate_id,
-                    created_at=created_at
-                ))
+            registered_items.append(RegisteredItem(
+                id=item_id,
+                storage_url=storage_url,
+                is_standard=False,
+                gender=None,
+                main_category=None,
+                sub_category=None,
+                color=meta.color,
+                item_type=meta.item_type,
+                category=meta.category,
+                coordinate_id=meta.coordinate_id,
+                created_at=created_at
+            ))
 
         # Step 3: Batch write to Firestore
         batch_start = time.time()

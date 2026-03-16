@@ -424,28 +424,11 @@ class ItemRegistrationResponse(BaseModel):
 
 class BulkItemMetadata(BaseModel):
     index: int
-    is_standard: bool
-    # Conditional required fields
-    gender: Optional[str] = None
-    main_category: Optional[str] = None
-    sub_category: Optional[str] = None
-    color: Optional[str] = None
-    item_type: Optional[str] = None
+    # User closet item fields only
+    item_type: str  # Required
     category: Optional[str] = None
+    color: Optional[str] = None
     coordinate_id: Optional[str] = None
-
-    @validator('gender')
-    def validate_gender(cls, v):
-        if v and v not in ['men', 'women']:
-            raise ValueError('gender must be "men" or "women"')
-        return v
-
-    @validator('main_category')
-    def validate_main_category(cls, v):
-        valid = ['アウター', 'トップス', 'ボトムス', 'シューズ', 'アクセサリー']
-        if v and v not in valid:
-            raise ValueError(f'main_category must be one of {valid}')
-        return v
 
 
 class BulkItemError(BaseModel):
