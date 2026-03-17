@@ -8,6 +8,7 @@ from PIL import Image
 from google import genai
 from google.genai import types
 from models import CoordinateItem
+from prompt_loader import get_prompt_loader
 
 
 class GeminiService:
@@ -54,31 +55,28 @@ class GeminiService:
     def generate_recommend_reasons(self, coordinates: List[CoordinateItem]) -> str:
         """
         Generate recommendation reasons based on coordinate reviews using Gemini API.
-        
+
         Args:
             coordinates: List of CoordinateItem objects (expecting 3-4 items)
-            
+
         Returns:
             str: Recommendation reason text (up to 150 characters)
         """
         if not coordinates or len(coordinates) < 2:
             return ""
-        
-        # Build the prompt with coordinate reviews
-        prompt_parts = ["以下にコーデの特徴を3つ渡します。出力は #アウトプットの形式 に従うこと。"]
 
-        for i, coord in enumerate(coordinates[:3]):  # Max 4 coordinates
+        # Build coordinate reviews
+        coordinate_reviews = []
+        for i, coord in enumerate(coordinates[:3]):  # Max 3 coordinates
             if coord.coordinate_review:
-                prompt_parts.append(f"#コーデ{i+1}\n{coord.coordinate_review}")   # コーデ1~3
-        
-        prompt_parts.append("""
-            #アウトプットの形式
-            {
-                "recommend_reasons": "<コーデ1,2,3 をレコメンドするので、レコメンド理由を必ず150文字以内。"コーデ1,2,3"という名称を使ってはいけません。例:ブラックを基調としたミニマルなスタイルに、チェック柄のシャツを重ね着し、カジュアルさとアクセントを加えることで、単調になりがちなモノトーンコーデに深みと個性をプラスできます。また、ダメージジーンズを取り入れれば、リラックスした雰囲気を演出しつつ、都会的なブラックコーデのカジュアルダウンとしても活躍します。柄や素材感で遊ぶことで、シックな中にも抜け感と遊び心が生まれます。>"
-            }
-            """)
-        
-        prompt = "\n".join(prompt_parts)
+                coordinate_reviews.append(f"#コーデ{i+1}\n{coord.coordinate_review}")
+
+        # Load prompt from file
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.format(
+            "generate_recommend_reasons",
+            coordinate_reviews="\n".join(coordinate_reviews)
+        )
         
         try:
             response = self.client.models.generate_content(
@@ -109,42 +107,23 @@ class GeminiService:
     def chat_coordinate_advice(self, question: str, gender: str, model: Optional[str] = None) -> str:
         """
         Generate coordinate advice based on user's question using Gemini API.
-        
+
         Args:
             question: User's question about fashion/coordination
             gender: Gender of the user (men/women/other)
-            
+
         Returns:
             str: Fashion advice response
         """
         gender_str = "メンズ" if gender == "men" else "レディース" if gender == "women" else "ユニセックス"
-        
-        prompt = f"""
-        あなたはプロのファッションコーディネーターです。
-        以下の質問に対して、{gender_str}ファッションの観点から具体的で実用的なアドバイスを提供してください。
-        
-        質問: {question}
-        
-        回答ガイドライン:
-        - 質問の内容に直接的に答える
-        - 具体的なアイテムやブランドの例を挙げる
-        - 季節感やトレンドを考慮する
-        - シーン別の着こなし方を提案する
-        - 初心者にも分かりやすい言葉で説明する
-        - 150-300文字程度で簡潔にまとめる
-        - 可読性を高めるために、改行コード（\n）を適宜使用する
-        - また強調する箇所は **太字** にする
-        - 基本的には箇条書きを使用する
-        - 飽きさせない面白い言い回しで回答する
-        
-        # アウトプット
-        {"answer": "<アドバイス内容>"}
 
-        # アウトプットの例
-        {
-            "answer": "**1. ハイウエストの白ボトムス**\nロイヤルブルーの鮮やかさを最も引き立て、クリーンで爽やかな印象に。スカートやパンツ問わず、上下のメリハリを強調し、夏らしい清涼感を高めます。\n\n**2. 黒のタイトスカートまたはスキニーパンツ**\n黒とブルーのコントラストは、シックで大人っぽい印象を作ります。広がりのあるペプラムに対してボトムを黒で引き締めると、全体がシャープにまとまり、大人っぽく格好良いムードになります。\n\n**3. ゴールドまたはシルバーの華奢なネックレス**\n開いたデコルテラインに華奢なアクセサリーを加えることで、肌の露出感を抑えつつ、上品な輝きがプラスされます。特にゴールドはブルーをエレガントに、シルバーはクールに演出します。"
-        }
-        """
+        # Load prompt from file
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.format(
+            "chat_coordinate_advice",
+            gender_str=gender_str,
+            question=question
+        )
         
         try:
             # Use provided model or default to gemini-2.5-flash-lite
@@ -170,38 +149,24 @@ class GeminiService:
     def chat_coordinate_advice_with_image(self, question: str, gender: str, image_base64: str, model: Optional[str] = None) -> str:
         """
         Generate coordinate advice based on user's question and image using Gemini API.
-        
+
         Args:
             question: User's question about fashion/coordination
             gender: Gender of the user (men/women/other)
             image_base64: Base64 encoded image data
-            
+
         Returns:
             str: Fashion advice response
         """
         gender_str = "メンズ" if gender == "men" else "レディース" if gender == "women" else "ユニセックス"
-        
-        prompt = f"""
-        あなたはプロのファッションコーディネーターです。
-        投稿された画像を見て、以下の質問に対して{gender_str}回答してください。必要最低限の文字数で、回答ガイドラインおよびアウトプットに従って出力してください。
-        
-        質問: {question}
-        
-        回答ガイドライン（**必ず守ること**）
-        - はじめに簡潔に結論を伝える
-        - 初心者にも分かりやすい優しい口調で話す
-        - **可読性を高めるために、改行 \n を適宜使用する**
-        - **箇条書きする場合、2番目以降の行頭には2段の改行 \n\n を入れる**
-        - **改行の文字は \n と表記すること。**<br>などの改行の文字として認めない
-        - 強調する箇所は **太字** にする
-        - 基本的には箇条書きを使用する
-        
-        # アウトプット
-        {{"answer": "<**必ず300文字以内で**質問への回答>"}}
 
-        # アウトプットの例
-        {{"answer": "〜はーだと思います！**1. ハイウエストの白ボトムス**\nロイヤルブルーの鮮やかさを最も引き立て、クリーンで爽やかな印象に。スカートやパンツ問わず、上下のメリハリを強調し、夏らしい清涼感を高めます。\n\n**2. 黒のタイトスカートまたはスキニーパンツ**\n黒とブルーのコントラストは、シックで大人っぽい印象を作ります。広がりのあるペプラムに対してボトムを黒で引き締めると、全体がシャープにまとまり、大人っぽく格好良いムードになります。\n\n**3. ゴールドまたはシルバーの華奢なネックレス**\n開いたデコルテラインに華奢なアクセサリーを加えることで、肌の露出感を抑えつつ、上品な輝きがプラスされます。特にゴールドはブルーをエレガントに、シルバーはクールに演出します。"}}
-        """
+        # Load prompt from file
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.format(
+            "chat_coordinate_advice_with_image",
+            gender_str=gender_str,
+            question=question
+        )
         
         try:
             # Resize image to 1/2 resolution for faster processing
@@ -253,14 +218,9 @@ class GeminiService:
         Returns:
             dict: {"ai_catchphrase": str, "ai_review_comment": str}
         """
-        prompt = """プロのスタイリストとしてコーディネート画像を分析し、以下を生成してください。
-
-# 出力内容
-- ai_catchphrase: 20字程度の面白い比喩表現（#なし）
-- ai_review_comment: 250字以内のコーデ解説（シルエット・色・季節感を簡潔に。段落分けは**太文字**で強調）
-
-# 注意
-簡潔に回答し、処理時間を短縮してください。ユーモアと個性を大切に。"""
+        # Load prompt from file
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.load("generate_review_parallel")
 
         try:
             content = [
@@ -302,20 +262,9 @@ class GeminiService:
         Returns:
             dict: {"tags": list}
         """
-        prompt = """プロのスタイリストとしてコーディネート画像を分析し、タグを生成してください。
-
-# 出力内容
-- tags: 7つのタグ
-  1. テイスト（例: カジュアル、フォーマル）
-  2. ユーモアのある比喩表現（例: 都会の風を纏う旅人）
-  3. 特徴（例: モノトーン、レイヤード）
-  4. 印象（例: スマート、リラックス）
-  5. シーン（例: デート、オフィス）
-  6. トップスの色と種類（例: 白 Tシャツ）
-  7. ボトムスの色と種類（例: 黒 スキニーパンツ）
-
-# 注意
-簡潔に。ユーモアと個性を。"""
+        # Load prompt from file
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.load("generate_tags_parallel")
 
         try:
             content = [
@@ -353,19 +302,9 @@ class GeminiService:
         Returns:
             dict: {"items": list, "item_types": list}
         """
-        prompt = """コーディネート画像から視認できる主要なアイテムを抽出してください。
-
-# 抽出内容
-- item_type: アウター/トップス/ボトムス/シューズ/アクセサリー
-- category: 具体的な種類（例: Tシャツ、ジーンズ）
-- color: 色
-- description: 色と種類の組み合わせ（例: 白 Tシャツ）
-
-# item_types
-抽出したitem_typeのリスト
-
-# 注意
-明確に識別できるアイテムのみ（最大5個）。簡潔に。"""
+        # Load prompt from file
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.load("extract_items_parallel")
 
         try:
             content = [
@@ -517,24 +456,9 @@ class GeminiService:
             "required": ["items"]
         }
 
-        # Prompt for item extraction
-        prompt = """
-        画像内のファッションアイテムを分類し、詳細に解析してください。
-
-        **指示:**
-        - コーディネート画像から視認できる主要なアイテムを抽出してください
-        - 各アイテムについて、種類(item_type)、カテゴリ(category)、色(color)、説明(description)を出力してください
-        - 'description' は色と種類からタグを生成してください（例: 黒 レザー ライダースジャケット）
-        - ハッシュタグ記号（#）は含めないでください
-        - 明確に識別できるアイテムのみを出力してください（最大5個程度）
-
-        **item_typeの選択基準:**
-        - アウター: ジャケット、コート、ブルゾンなど
-        - トップス: シャツ、Tシャツ、ニット、パーカーなど
-        - ボトムス: パンツ、スカート、ショーツなど
-        - シューズ: スニーカー、ブーツ、革靴など
-        - アクセサリー: 帽子、バッグ、時計、サングラスなど
-        """
+        # Load prompt from file
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.load("extract_coordinate_items")
 
         try:
             # Create content with text and resized image
@@ -599,31 +523,12 @@ class GeminiService:
         if not all_tags:
             return ""
 
-        # Build prompt
-        prompt = f"""
-あなたはファッション分析の専門家です。
-ユーザーの直近のコーディネートから抽出されたタグを分析し、ファッション傾向を簡潔にまとめてください。
-
-**タグ情報:**
-{', '.join(all_tags)}
-
-**分析指示:**
-- 上記のタグから、ユーザーのファッション傾向を読み取ってください
-- 100文字程度で簡潔にまとめてください
-- ポジティブで親しみやすい口調で書いてください
-- 具体的なスタイルやテイストに言及してください
-- **必ず日本語で出力してください**
-
-**出力形式:**
-{{
-    "analysis": "<100文字程度のファッション傾向分析（日本語）>"
-}}
-
-**出力例:**
-{{
-    "analysis": "カジュアルを基調としつつ、モノトーンやシンプルなアイテムを好む傾向が見られます。ミニマルでスマートな印象を大切にしているようですね！"
-}}
-"""
+        # Load prompt from file and format with tags
+        prompt_loader = get_prompt_loader()
+        prompt = prompt_loader.format(
+            "analyze_recent_coordinates",
+            tags=', '.join(all_tags)
+        )
 
         try:
             response = self.client.models.generate_content(

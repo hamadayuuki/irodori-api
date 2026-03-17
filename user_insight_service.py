@@ -10,6 +10,7 @@ import json
 import uuid
 from firebase_admin import firestore
 from gemini_service import GeminiService
+from prompt_loader import get_prompt_loader
 
 
 class UserInsightService:
@@ -326,10 +327,11 @@ class UserInsightService:
         Returns:
             str: Geminiプロンプト
         """
-        prompt_parts = [
-            "あなたはプロのファッションアドバイザーです。",
-            "ユーザーのファッションタイプ、動物占い、そして実際のコーディネート履歴から、ファッションに関するインサイト（洞察）を生成してください。\n"
-        ]
+        # Load intro from file
+        prompt_loader = get_prompt_loader()
+        intro = prompt_loader.load("user_insight_intro")
+
+        prompt_parts = [intro, ""]
 
         # ファッションタイプ情報
         if fashion_type:
@@ -402,38 +404,9 @@ class UserInsightService:
 
             prompt_parts.append("")
 
-        # 出力指示
-        prompt_parts.append("""
-## 出力指示
-上記の情報を踏まえて、ユーザーのファッションに関するインサイトを生成してください。
-
-**🎯 最重要ルール:**
-1. **必ず「直近3件のコーディネート」を中心に分析してください**
-2. 直近3件から見える具体的な傾向（色、テイスト、アイテム、タグ）を必ず言及
-3. 「最近のあなたは〜」「直近3件のコーデを見ると〜」など、時系列を意識した表現を使用
-4. 可能であれば、過去のコーデ（4-7件目）との比較・変化も言及
-
-**出力ガイドライン:**
-- 200-300文字程度で簡潔にまとめる
-- **冒頭で「直近3件のコーデ」の分析から始める**（ユーザーに実感させる）
-- ファッションタイプ、動物占いの情報も統合
-- 直近3件に共通する要素を具体的に抽出（例：「直近3件すべてにモノトーンが登場」）
-- 直近3件の具体的なタグやキャッチフレーズを引用
-- ポジティブで親しみやすい口調で書く
-- 可読性を高めるために適宜改行（\\n）を使用する
-- 強調箇所は **太字** にする
-- 箇条書きを使う場合は2番目以降の行頭に2段改行（\\n\\n）を入れる
-
-**出力形式:**
-{
-    "insight": "<ユーザーのファッションインサイト（200-300文字）>"
-}
-
-**出力例:**
-{
-    "insight": "**直近3件のコーデを見ると、モノトーンを軸にした洗練されたスタイルが確立されていますね！**特にブラック×ホワイトの組み合わせが印象的で、『都会の風を纏う旅人』『シックで大人っぽい雰囲気』といったテイストが一貫しています。\\n\\n**最近のあなたの強み:**\\n- モノトーンコーデに小物やレイヤードで変化をつける技術\\n\\n- シンプルながらも単調にならない計算されたバランス感覚\\n\\n- トレンド感を保ちつつクラシックな要素も取り入れる柔軟性\\n\\nあなたの「トレンド・エディター」タイプの特徴が、実際のコーデにしっかり反映されています。次は差し色としてネイビーやグレーを取り入れると、さらに幅が広がりそうです！"
-}
-""")
+        # Load output instructions from file
+        output_instructions = prompt_loader.load("user_insight_output_instructions")
+        prompt_parts.append(output_instructions)
 
         return "\n".join(prompt_parts)
 
