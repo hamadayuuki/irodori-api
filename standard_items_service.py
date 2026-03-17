@@ -97,6 +97,15 @@ class StandardItemsService:
             for doc in docs:
                 data = doc.to_dict()
 
+                # storage_pathで本物のスタンダードアイテムを判別
+                # 本物: "standard-items/{gender}/..." で始まる
+                # ユーザー登録: "items/{user_id}/..." で始まる
+                storage_path = data.get('storage_path', '')
+                if not storage_path.startswith('standard-items/'):
+                    # ユーザーが誤って登録したアイテムをスキップ
+                    print(f"[StandardItems] Skipping user-registered item: {doc.id} (path: {storage_path})")
+                    continue
+
                 # uploaded_at を文字列に変換
                 uploaded_at = data.get('uploaded_at')
                 if uploaded_at:
@@ -146,6 +155,13 @@ class StandardItemsService:
 
             for doc in docs:
                 data = doc.to_dict()
+
+                # storage_pathで本物のスタンダードアイテムを判別
+                storage_path = data.get('storage_path', '')
+                if not storage_path.startswith('standard-items/'):
+                    # ユーザーが誤って登録したアイテムをスキップ
+                    continue
+
                 main_cat = data.get('main_category', 'unknown')
                 sub_cat = data.get('sub_category', '')
                 color = data.get('color', '')
