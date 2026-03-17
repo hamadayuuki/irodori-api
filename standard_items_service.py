@@ -90,10 +90,13 @@ class StandardItemsService:
             if color:
                 query = query.where(filter=FieldFilter('color', '==', color))
 
-            # 取得
-            docs = query.limit(limit).stream()
+            # 取得（limitを多めに取得してフィルタリング後に調整）
+            # storage_pathフィルタで除外されるアイテムを考慮してlimitの2倍取得
+            docs = query.limit(limit * 2).stream()
 
             items = []
+            seen_urls = set()  # 重複チェック用（storage_urlベース）
+
             for doc in docs:
                 data = doc.to_dict()
 
@@ -106,6 +109,14 @@ class StandardItemsService:
                     print(f"[StandardItems] Skipping user-registered item: {doc.id} (path: {storage_path})")
                     continue
 
+                # 重複チェック（storage_urlで判定）
+                storage_url = data.get('storage_url', '')
+                if storage_url in seen_urls:
+                    print(f"[StandardItems] Skipping duplicate item: {doc.id} (url: {storage_url[:60]}...)")
+                    continue
+
+                seen_urls.add(storage_url)
+
                 # uploaded_at を文字列に変換
                 uploaded_at = data.get('uploaded_at')
                 if uploaded_at:
@@ -114,7 +125,7 @@ class StandardItemsService:
                 items.append({
                     'id': doc.id,
                     'filename': data.get('filename', ''),
-                    'storage_url': data.get('storage_url', ''),
+                    'storage_url': storage_url,
                     'main_category': data.get('main_category', ''),
                     'sub_category': data.get('sub_category', ''),
                     'color': data.get('color', ''),
@@ -123,6 +134,10 @@ class StandardItemsService:
                     'file_size': data.get('file_size', 0),
                     'uploaded_at': uploaded_at
                 })
+
+                # limitに達したら終了
+                if len(items) >= limit:
+                    break
 
             return items
 
@@ -152,6 +167,7 @@ class StandardItemsService:
 
             categories = {}
             total_count = 0
+            seen_urls = set()  # 重複チェック用
 
             for doc in docs:
                 data = doc.to_dict()
@@ -161,6 +177,12 @@ class StandardItemsService:
                 if not storage_path.startswith('standard-items/'):
                     # ユーザーが誤って登録したアイテムをスキップ
                     continue
+
+                # 重複チェック（storage_urlで判定）
+                storage_url = data.get('storage_url', '')
+                if storage_url in seen_urls:
+                    continue
+                seen_urls.add(storage_url)
 
                 main_cat = data.get('main_category', 'unknown')
                 sub_cat = data.get('sub_category', '')
