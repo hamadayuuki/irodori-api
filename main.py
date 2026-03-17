@@ -2637,6 +2637,7 @@ async def register_items_bulk(
             raise HTTPException(status_code=400, detail=f"Metadata validation failed: {str(e)}")
 
         # Validate all file types
+        errors = []  # Initialize errors list
         for idx, image in enumerate(images):
             if not image.content_type or not image.content_type.startswith('image/'):
                 errors.append(BulkItemError(
