@@ -366,16 +366,10 @@ class UserInsightService:
         if fashion_reviews and len(fashion_reviews) > 0:
             prompt_parts.append("## 実際のコーディネート履歴")
             prompt_parts.append("ユーザーが実際に投稿したコーディネートのレビューです。")
-            prompt_parts.append("**🎯 分析の優先順位:**")
-            prompt_parts.append("1. **直近3件を最重要視** - ユーザーの現在のスタイル傾向を表す")
-            prompt_parts.append("2. 4-7件目は参考情報 - 過去のスタイル傾向との比較に使用\n")
 
             # 直近3件（最重要）
             recent_3 = fashion_reviews[:3]
             if recent_3:
-                prompt_parts.append("### 🔥【最重要】直近3件のコーディネート（ユーザーの現在のスタイル）")
-                prompt_parts.append("**この3件から現在のスタイル傾向を必ず分析してください！**\n")
-
                 for i, review in enumerate(recent_3, 1):
                     prompt_parts.append(f"**📅 直近コーデ {i}** ({review.get('date', '日付不明')})")
                     prompt_parts.append(f"- キャッチフレーズ: {review.get('ai_catchphrase', 'なし')}")
