@@ -12,6 +12,18 @@ from prompt_loader import get_prompt_loader
 
 
 class GeminiService:
+    # Model-specific thinking budget configuration
+    # Thinking models require thinking_budget > 0
+    # Non-thinking models require thinking_budget = 0
+    MODEL_THINKING_BUDGETS = {
+        "gemini-3-pro-preview": 8192,
+        "gemini-2.5-pro-thinking": 8192,
+        "gemini-2.5-flash-lite": 0,
+        "gemini-2.5-flash": 0,
+        "gemini-1.5-pro": 0,
+        "gemini-1.5-flash": 0,
+    }
+
     def __init__(self, api_key: Optional[str] = None):
         # Try to get API key from environment variable if not provided
         api_key = api_key or os.getenv('GOOGLE_GENAI_API_KEY')
@@ -128,6 +140,11 @@ class GeminiService:
         try:
             # Use provided model or default to gemini-2.5-flash-lite
             model_name = model if model else "gemini-2.5-flash-lite"
+
+            # Get appropriate thinking_budget for the selected model
+            thinking_budget = self.MODEL_THINKING_BUDGETS.get(model_name, 0)
+            print(f"Using model: {model_name}, thinking_budget: {thinking_budget}")
+
             response = self.client.models.generate_content(
                 model=model_name,
                 contents=prompt,
@@ -136,10 +153,10 @@ class GeminiService:
                     response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
                     temperature=0.7,
                     max_output_tokens=3000,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
+                    thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget, include_thoughts=False)
                 ),
             )
-            
+
             result = json.loads(response.text)
             return result.get("answer", "申し訳ございません。回答を生成できませんでした。")
         except Exception as e:
@@ -183,6 +200,12 @@ class GeminiService:
 
             # Use provided model or default to gemini-2.5-flash-lite
             model_name = model if model else "gemini-2.5-flash-lite"
+
+            # Get appropriate thinking_budget for the selected model
+            # Default to 0 for unknown models (non-thinking models)
+            thinking_budget = self.MODEL_THINKING_BUDGETS.get(model_name, 0)
+            print(f"Using model: {model_name}, thinking_budget: {thinking_budget}")
+
             response = self.client.models.generate_content(
                 model=model_name,
                 contents=content,
@@ -191,7 +214,7 @@ class GeminiService:
                     response_schema={"type": "object", "properties": {"answer": {"type": "string"}}},
                     temperature=0.7,
                     max_output_tokens=3000,
-                    thinking_config=types.ThinkingConfig(thinking_budget=0, include_thoughts=False)
+                    thinking_config=types.ThinkingConfig(thinking_budget=thinking_budget, include_thoughts=False)
                 ),
             )
             
